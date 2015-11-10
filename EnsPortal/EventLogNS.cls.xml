@@ -155,6 +155,7 @@ Save user's last search criteria into global for page default</Description>
 	For p = 1:1:$L(EventType,",") Set pv=$P(EventType,",",p),$P(EventType,",",p) = $S(pv="true":1,pv="false":0,1:pv)
 	For p = 1:1:$L(States,",") Set pv=$P(States,",",p),$P(States,",",p) = $S(pv="true":1,pv="false":0,1:pv)
 	Set AutoRefresh = $S(AutoRefresh="true":1,AutoRefresh="false":0,1:AutoRefresh)
+	s ^test(3) = NamespaceList
 	Do ..SetDefaultString(SortOrder_"^"_TimeFormat_"^"_Defaults_"^"_EventType_"^"_MaxRows_"^"_States_"^"_AutoRefresh _"^"_ NamespaceList)
 ]]></Implementation>
 </Method>
@@ -185,7 +186,10 @@ Save user's last search criteria into global for page default</Description>
 <Description><![CDATA[
 Method called from <method>%OnAfterCreatePage</method> to get defaults and build up the initial display]]></Description>
 <ReturnType>%String</ReturnType>
-<Implementation><![CDATA[	do ##super()
+<Implementation><![CDATA[
+	do ##super()
+	Set SearchCriteria = ..GetSearchCriteria()
+	Set NamespceList = $P(SearchCriteria,"^",8)
 ]]></Implementation>
 </Method>
 </Class>
