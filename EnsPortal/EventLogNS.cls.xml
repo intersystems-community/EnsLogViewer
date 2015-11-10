@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="EnsPortal.EventLogNS">
+<Description>
+This is the Event Log page of the ZEN Ensemble application.
+With namespace support</Description>
+<IncludeCode>Ensemble</IncludeCode>
+<Super>EnsPortal.EventLog</Super>
+<System>4</System>
+<TimeCreated>60310,50851.071342</TimeCreated>
+</Class>
+</Export>
