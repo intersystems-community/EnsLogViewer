@@ -8,5 +8,141 @@ With namespace support</Description>
 <Super>EnsPortal.EventLog</Super>
 <System>4</System>
 <TimeCreated>60310,50851.071342</TimeCreated>
+
+<Method name="CheckConditions">
+<Description><![CDATA[
+Callback that is executed when creating the resultset for the main table.
+The method's main purpose is to determine whether the <query>MultiType</query> class query
+should be used in cases where we have the following:
+<ul><li>more than one Type selected,</li>
+<li>not all Types selected, and</li>
+<li>no conditions on other indexed fields</li></ul>
+When all of these conditions are met, we hand off responsibility for the data retrieval to the class query.]]></Description>
+<FormalSpec>*pSC:%Status,pInfo:%ZEN.Auxiliary.QueryInfo</FormalSpec>
+<ReturnType>%ResultSet</ReturnType>
+<Implementation><![CDATA[
+	Do:..#CANCANCELSEARCH ..PrepareCancel()
+	Set pSC = $$$OK
+	Set tRS = ""
+	Set tIndexCount = 0
+
+	Set tSearchCriteria = ..GetSearchCriteria()
+	Set tDefaults = $P(tSearchCriteria,"^",3)
+	Set tConfigName = $S(""'=..matchSource:..matchSource, 1:$P(tDefaults,",",1))
+	If (tConfigName '= "") {
+		Set tIndexCount = tIndexCount + 1
+	}
+
+	Set tStartTime = $P(tDefaults,",",8)
+	Set tEndTime = $P(tDefaults,",",9)
+	If (tStartTime '= "") || (tEndTime '= "") {
+		Set tIndexCount = tIndexCount + 1
+	}
+
+	Set tEventTypes = $P(tSearchCriteria,"^",4)
+	Set tTypeCount = 0
+	If tIndexCount = 0 {
+		Set tEventNames = $lb("Assert","Error","Warning","Info","Trace","Alert")
+		Set tTypes = ""
+	}
+	For i=1:1:6 {
+		Set tInclude = $P(tEventTypes,",",i)
+		If $S(tInclude="true":1,tInclude="false":0,1:tInclude) {
+			Set tTypeCount = tTypeCount + 1
+			If tIndexCount = 0 Set tTypes = tTypes _ $listbuild($listget(tEventNames,i))
+		}
+	}
+	If tTypeCount && (tTypeCount < 6) {
+		Set tIndexCount = tIndexCount + 1
+		If (tTypeCount > 1) && (tIndexCount = 1) {
+			Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLog:MultiType")
+			#; Get inclusive StartID and EndID values
+			Set tStartID = $piece(tSearchCriteria,",",6)
+			Set tEndID = $piece(tSearchCriteria,",",7)
+			If (tStartID && tEndID) && (tEndID < tStartID) {
+				Set tTempID = tStartID
+				Set tStartID = tEndID
+				Set tEndID = tTempID
+			}
+			Set tMinID = $select(tStartID: tStartID-1, 1: "")
+			Set tMaxID = $select(tEndID: tEndID+1, 1: "")
+			#; Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
+			#; This is OK (for now) because the main StartID and EndID restrictions use conditions on "%ID"
+			Set tTable = ..%GetComponentById("table")
+			If $IsObject(tTable) && (tTable.sql '= "") {
+				Set tModifiers = $piece(tTable.sql," FROM Ens_Util.Log",2)
+				If (tModifiers '= "") && (tModifiers [ " WHERE ") {
+					Set tWhere = $piece($piece(tModifiers," ORDER BY ID",1),"WHERE ",2)
+					If (tWhere '= "") {
+						For i=1:1:$length(tWhere," AND ") {
+							#; remove trailing whitespace so the value is at end
+							Set tCondition = $zstrip($piece(tWhere," AND ",i),">W")
+							Set tProp = $piece(tCondition," ",1)
+							If (tProp = "ID") {
+								Set tOp = $piece($piece(tCondition,tProp_" ",2)," ",1)
+								Set tVal = $piece(tCondition," ",*)
+								If (tOp = "<") {
+									Set tMaxID = $select(tVal = "": tMaxID, tMaxID = "": tVal, tMaxID < tVal: tMaxID, 1: tVal)
+								}
+								ElseIf (tOp = ">") {
+									Set tMinID = $select(tVal = "": tMinID, tMinID = "": tVal, tMinID > tVal: tMinID, 1: tVal)
+								}
+							}
+						}
+					}
+				}
+			}
+			Set tConditions = ##class(%ZEN.proxyObject).%New()
+			Set tDisplayConditions = ""
+			If (tMinID) {
+				Set tConditions.MinID = tMinID
+				Set tDisplayConditions = tDisplayConditions _ $LB("ID > "_tMinID)
+			}
+			If (tMaxID) {
+				Set tConditions.MaxID = tMaxID
+				Set tDisplayConditions = tDisplayConditions _ $LB("ID < "_tMaxID)
+			}
+			Set tDisplayConditions = tDisplayConditions _ $LB("Type IN ('"_$LTS(tTypes,"','")_"')")
+			// Pick up any other restrictions
+			Set tConditions.SourceClass = $piece(tDefaults,",",2)
+			If (tConditions.SourceClass '= "") {
+				Set tDisplayConditions = tDisplayConditions _ $LB("SourceClass LIKE '"_tConditions.SourceClass_"'")
+			}
+			Set tConditions.SourceMethod = $piece(tDefaults,",",3)
+			If (tConditions.SourceMethod '= "") {
+				Set tDisplayConditions = tDisplayConditions _ $LB("SourceMethod LIKE '"_tConditions.SourceMethod_"'")
+			}
+			Set tConditions.Text = $piece(tDefaults,",",4)
+			If (tConditions.Text '= "") {
+				Set tDisplayConditions = tDisplayConditions _ $LB("Text [ '"_tConditions.Text_"'")
+			}
+			Set tConditions.Job = $piece(tDefaults,",",5)
+			If (tConditions.Job '= "") {
+				Set tDisplayConditions = tDisplayConditions _ $LB("Job = '"_tConditions.Job_"'")
+			}
+			Set tConditions.SessionID = $piece(tDefaults,",",10)
+			If (tConditions.SessionID '= "") {
+				Set tDisplayConditions = tDisplayConditions _ $LB("SessionID = '"_tConditions.SessionID_"'")
+			}
+			Set tDescending = $select($piece(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
+			Set tDisplayConditions = tDisplayConditions _ $LB($select(tDescending: "DESC", 1: "ASC"))
+			Set pSC = tRS.Execute($listtostring(tTypes),tDescending,,tConditions)
+			If $$$ISERR(pSC) Quit ""
+			Set pInfo.queryText = "EnsPortal.EventLog:MultiType class query; " _ $LTS(tDisplayConditions,"; ")
+			Set pInfo.queryExecuted = 1
+			Quit tRS
+		}
+	}
+
+	Set tMaxRows = 0
+	If (tIndexCount > 1) {
+		Set tMaxRows = $P(tSearchCriteria,"^",5)
+		If (tMaxRows = "") Set tMaxRows = 500
+	}
+	Set pInfo.rows = tMaxRows
+
+	Quit tRS
+]]></Implementation>
+</Method>
 </Class>
 </Export>
