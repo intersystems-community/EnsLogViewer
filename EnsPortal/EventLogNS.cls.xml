@@ -144,5 +144,35 @@ When all of these conditions are met, we hand off responsibility for the data re
 	Quit tRS
 ]]></Implementation>
 </Method>
+
+<Method name="SaveDefaults">
+<Description>
+Save user's last search criteria into global for page default</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh</FormalSpec>
+<ZenMethod>1</ZenMethod>
+<Implementation><![CDATA[
+	For p = 1:1:$L(EventType,",") Set pv=$P(EventType,",",p),$P(EventType,",",p) = $S(pv="true":1,pv="false":0,1:pv)
+	For p = 1:1:$L(States,",") Set pv=$P(States,",",p),$P(States,",",p) = $S(pv="true":1,pv="false":0,1:pv)
+	Set AutoRefresh = $S(AutoRefresh="true":1,AutoRefresh="false":0,1:AutoRefresh)
+	Do ..SetDefaultString(SortOrder_"^"_TimeFormat_"^"_Defaults_"^"_EventType_"^"_MaxRows_"^"_States_"^"_AutoRefresh)
+]]></Implementation>
+</Method>
+
+<Method name="GetSearchCriteria">
+<CodeMode>expression</CodeMode>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[$get(^CacheTemp.EnsPortal($Username,"EventLog","SearchCriteria"),"Newest First^999^^1,1,1,1,1,1^500^0,0,0,0,0^1")
+]]></Implementation>
+</Method>
+
+<Method name="GetAndUseDefaults">
+<Description><![CDATA[
+Method called from <method>%OnAfterCreatePage</method> to get defaults and build up the initial display]]></Description>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[	do ##super()
+]]></Implementation>
+</Method>
 </Class>
 </Export>
