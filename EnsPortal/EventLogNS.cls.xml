@@ -9,6 +9,75 @@ With namespace support</Description>
 <System>4</System>
 <TimeCreated>60310,50851.071342</TimeCreated>
 
+<XData name="resultsPane">
+<Description>
+This pane displays event log activity table. User may click on a row and details are displayed to the side.</Description>
+<XMLNamespace>http://www.intersystems.com/zen</XMLNamespace>
+<Data><![CDATA[
+<pane>
+<vgroup valign="top">
+<!--<spacer height="5"/>-->
+<tablePane id="table" 
+	cellSpacing="2"
+	dataSource="columns"
+	tableName="Ens_Util.Log"
+	useSnapshot="false"
+	showZebra="true"
+	valueColumn="ID"
+	maxRows="1000"
+	useKeys="true"
+	showQuery="false"
+	onselectrow="zenPage.selectItem(zenThis);"
+	nowrap="true" 
+	onmouseoverClass="tpMouseOver"
+	enableToggleSelect="true"
+	onupdate="setTimeout('zenPage.onAfterSearch();',50);"
+	initialExecute="false"
+	OnCreateResultSet="CheckConditions"
+	unlockSession="true"
+	>
+<!-- provide header values for all columns so they can be localized -->
+<column header="Type" colName="Type" style="text-align:left;" width="65" OnDrawCell="DrawLocalType"
+        title="Alert, Assert, Error, Info, Trace, or Warning"/>
+<column header="ID" colName="ID" style="text-align:left;" width="90"
+		title="Log Event ID"/>
+<column header="Time Logged" colName="TimeLogged999" id="idTimeLogged999" width="180" colExpression="{fn RIGHT(%EXTERNAL(TimeLogged),999)}"
+		title="Time the event was noted in the log" hidden="true" />
+<column header="Time Logged" colName="TimeLogged12" id="idTimeLogged12" width="180" colExpression="{fn RIGHT(%EXTERNAL(TimeLogged),12)}"
+		title="Time the event was noted in the log" />
+<column header="Session" colName="SessionId" width="90"
+       title="Identifier for the session in which the event occurred"
+       link=" "
+        OnDrawCell="DrawSessionCell" />
+<column header="Job" colName="Job" width="90"
+        title="System job in which the event occurred"
+        OnDrawCell="DrawMethodCell" />
+<column header="Source" colName="ConfigName" width="200"
+        title="Ensemble configuration name of the item that triggered the event"
+        OnDrawCell="DrawMethodCell" />
+<column header="Text" colName="Text" width="1200"
+        title="Descriptive text logged with the event"
+        OnDrawCell="DrawTextCell" />
+<column colName="TraceCat" hidden="true"/>
+<column colName="SourceClass" hidden="true"/>
+<column colName="SourceMethod" hidden="true"/>
+<!-- we will not be switching colors by user preference; we will always use zebra plus 1-column color coding -->
+<condition id="condAlert" colName="Type" predicate="EQ" value="Alert" targetCol="Type" cellStyle="background: yellow; color: darkred; font-weight: bold;" />
+<condition id="condError" colName="Type" predicate="EQ" value="Error" targetCol="Type" cellStyle="background: pink; color: darkred; font-weight: bold;" />
+<condition id="condWarning" colName="Type" predicate="EQ" value="Warning" targetCol="Type" cellStyle="background: orange; color: darkred; font-weight: bold;" />
+<condition id="condAssert" colName="Type" predicate="EQ" value="Assert" targetCol="Type" cellStyle="background: silver; color: darkred; font-weight: bold;" />
+<condition id="condTrace" colName="Type" predicate="EQ" value="Trace" targetCol="Type" cellStyle="background: lightblue; color: darkblue; font-weight: bold;" />
+<!-- it does not work to have a condition Type EQ Info and also have Method EQ Start/StopProduction so no condition on Type EQ Info -->
+<condition id="condStart" colName="SourceMethod" predicate="EQ" value="StartProduction" targetCol="Type" cellStyle="background: lightgreen; color: darkgreen; font-weight: bold;" />
+<condition id="condStop" colName="SourceMethod" predicate="EQ" value="StopProduction" targetCol="Type" cellStyle="background: lightgreen; color: darkgreen; font-weight: bold;" />
+</tablePane>
+<!-- set default auto refresh to "None" -->
+<timer id="timer" ontimeout="zenPage.timeout(zenThis);" timeout="0"/>
+</vgroup>
+</pane>
+]]></Data>
+</XData>
+
 <Method name="CheckConditions">
 <Description><![CDATA[
 Callback that is executed when creating the resultset for the main table.
