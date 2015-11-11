@@ -470,7 +470,7 @@ or we have completed a non-zero Purge.</Description>
 	var AutoRefresh = auto.getValue();
 	
 	// Save last selections to global as default for page
-	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh);
+	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,"ENSVIEWER,ENSDEMO");
 ]]></Implementation>
 </Method>
 </Class>
