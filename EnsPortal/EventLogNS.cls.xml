@@ -41,10 +41,8 @@ This pane displays event log activity table. User may click on a row and details
         title="Alert, Assert, Error, Info, Trace, or Warning"/>
 <column header="ID" colName="ID" style="text-align:left;" width="90"
 		title="Log Event ID"/>
-	<!--	<column header="Namespace" colName="Namespace"  style="text-align:left;" width="90"
-		title="Namespace"/>		-->
-<column header="Namespace" style="text-align:left;" width="90"
-		title="Namespace"  OnDrawCell="DrawNamespaceCell"/>		
+<column header="Namespace" colName="Namespace" style="text-align:left;" width="90"
+		title="Namespace"/>
 <column header="Time Logged" colName="TimeLogged999" id="idTimeLogged999" width="180" colExpression="{fn RIGHT(%EXTERNAL(TimeLogged),999)}"
 		title="Time the event was noted in the log" hidden="true" />
 <column header="Time Logged" colName="TimeLogged12" id="idTimeLogged12" width="180" colExpression="{fn RIGHT(%EXTERNAL(TimeLogged),12)}"
@@ -266,6 +264,13 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 ]]></Implementation>
 </Method>
 
+<Query name="MultiType">
+<Type>%Query</Type>
+<FormalSpec>pTypes:%String="",pDescending:%Boolean=0,pSelectMode:%Integer=2,pConditions:%ZEN.proxyObject=""</FormalSpec>
+<Parameter name="CONTAINID" value="2"/>
+<Parameter name="ROWSPEC" value="Type:Ens.DataType.LogType,ID:%String,TimeLogged:%String,SessionId:%String,Job:%String,ConfigName:%String,Text:%String,TraceCat:%String,SourceClass:%String,SourceMethod:%String,TimeLogged999:%String,TimeLogged12:%String,Namespace:%String"/>
+</Query>
+
 <Method name="MultiTypeExecute">
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary,pTypes:%String="",pDescending:%Boolean=1,pSelectMode:%Integer=2,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
@@ -399,18 +404,6 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		Set tStatus = $$$EnsSystemError
 	}
 	Quit tStatus
-]]></Implementation>
-</Method>
-
-<Method name="DrawNamespaceCell">
-<Description>
-Server-side method to write out the event text both as content and in the hover-text title.</Description>
-<FormalSpec>table:%ZEN.Component.tablePane,name:%ZEN.Datatype.string,seed:%ZEN.Datatype.string</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-	//Set tTxt=$ZCVT(%query("Namespace"),"O","HTML")	
-	&html<<span title="#($Namespace)#" >#($Namespace)#</span>>
-	Quit $$$OK
 ]]></Implementation>
 </Method>
 </Class>
