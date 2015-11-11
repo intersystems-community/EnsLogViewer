@@ -124,7 +124,7 @@ When all of these conditions are met, we hand off responsibility for the data re
 			If tIndexCount = 0 Set tTypes = tTypes _ $listbuild($listget(tEventNames,i))
 		}
 	}
-	If tTypeCount && (tTypeCount < 6) {
+	//If tTypeCount && (tTypeCount < 6) {
 		Set tIndexCount = tIndexCount + 1
 		If (tTypeCount > 1) && (tIndexCount = 1) {
 			Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLogNS:MultiType")
@@ -204,7 +204,8 @@ When all of these conditions are met, we hand off responsibility for the data re
 			Set pInfo.queryExecuted = 1
 			Quit tRS
 		}
-	}
+	//}
+
 
 	Set tMaxRows = 0
 	If (tIndexCount > 1) {
