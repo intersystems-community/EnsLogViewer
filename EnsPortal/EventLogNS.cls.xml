@@ -196,6 +196,7 @@ When all of these conditions are met, we hand off responsibility for the data re
 			If (tConditions.SessionID '= "") {
 				Set tDisplayConditions = tDisplayConditions _ $LB("SessionID = '"_tConditions.SessionID_"'")
 			}
+			Set tConditions.NamespaceList = $P(tSearchCriteria,"^",8)
 			Set tDescending = $select($piece(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
 			Set tDisplayConditions = tDisplayConditions _ $LB($select(tDescending: "DESC", 1: "ASC"))
 			Set pSC = tRS.Execute($listtostring(tTypes),tDescending,,tConditions)
@@ -273,6 +274,69 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <Parameter name="ROWSPEC" value="Type:Ens.DataType.LogType,ID:%String,TimeLogged:%String,SessionId:%String,Job:%String,ConfigName:%String,Text:%String,TraceCat:%String,SourceClass:%String,SourceMethod:%String,TimeLogged999:%String,TimeLogged12:%String,Namespace:%String"/>
 </Query>
 
+<Method name="ConstructWhereConditions">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&qHandle:%Binary,pTypes,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	Set qHandle("mainArgs") = 0
+	Set tSpecialConditions = ""
+	If $IsObject(pConditions) {
+		If (pConditions.MinID '= "") {
+			Set tSpecialConditions = tSpecialConditions _ $LB("ID > ?")
+			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.MinID
+		}
+		If (pConditions.MaxID '= "") {
+			Set tSpecialConditions = tSpecialConditions _ $LB("ID < ?")
+			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.MaxID
+		}
+		If (pConditions.Job '= "") {
+			Set tSpecialConditions = tSpecialConditions _ $LB("Job = ?")
+			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Job
+		}
+		If (pConditions.SessionID '= "") {
+			Set tSpecialConditions = tSpecialConditions _ $LB("SessionId = ?")
+			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SessionID
+		}
+		If (pConditions.SourceClass '= "") {
+			Set tSpecialConditions = tSpecialConditions _ $LB("SourceClass LIKE ?")
+			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceClass
+		}
+		If (pConditions.SourceMethod '= "") {
+			Set tSpecialConditions = tSpecialConditions _ $LB("SourceMethod LIKE ?")
+			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceMethod
+		}
+		If (pConditions.Text '= "") {
+			Set tSpecialConditions = tSpecialConditions _ $LB("Text [ ?")
+			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Text
+		}
+	}
+		
+	Set tTypeCount = $length(pTypes,",")
+	s ^test("pTypes")=pTypes
+	If tTypeCount>0 {
+		Set tTypesSQL=""
+		For i=1:1:tTypeCount {
+			Set tType = $piece(pTypes,",",i)
+			If (tType '= "") && '##class(Ens.DataType.LogType).IsValid(tType) {
+				Set tTypesSQL =tTypesSQL _ $lb("'" _ tType _ "'")
+			}
+			
+		}
+		Set tTypesSQL = $LTS(tTypesSQL,", ")
+		Set tSpecialConditions = tSpecialConditions _ $LB("Type IN (" _ tTypesSQL _ ")")
+	}
+	return $LTS(tSpecialConditions," AND ")
+]]></Implementation>
+</Method>
+
 <Method name="MultiTypeExecute">
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary,pTypes:%String="",pDescending:%Boolean=1,pSelectMode:%Integer=2,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
@@ -281,80 +345,33 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 	Set tStatus = $$$OK
 	Try {
 		Set tOrder = $select(pDescending: "DESC", 1: "ASC")
-		Set qHandle("dir") = $select(pDescending: -1, 1: 1)
-		Set tInStatement = ##class(%SQL.Statement).%New()
-		Set tInStatement.%SelectMode = 0
-		Set tInSQL = "SELECT ID FROM Ens_Util.Log WHERE Type = ? "
-		Set tArgs = 0
+		//Set tInStatement = ##class(%SQL.Statement).%New()
+		//Set tInStatement.%SelectMode = 0
 		If $IsObject(pConditions) {
-			If (pConditions.MinID '= "") {
-				Set tInSQL = tInSQL _ "AND ID > ? "
-				Set tArgs = tArgs + 1
-				Set tArgs(tArgs) = pConditions.MinID
-			}
-			If (pConditions.MaxID '= "") {
-				Set tInSQL = tInSQL _ "AND ID < ? "
-				Set tArgs = tArgs + 1
-				Set tArgs(tArgs) = pConditions.MaxID
+			If (pConditions.NamespaceList '= "") {
+				Set qHandle("NamespaceList") = pConditions.NamespaceList
+				Set qHandle("OriginalNamespace") = $Namespace
+				Set qHandle("NamespaceCount") = $L(qHandle("NamespaceList"),",")
+				Set qHandle("CurrentNamespaceNumber") = 1
+				Set qHandle("CurrentNamespace") = $P(qHandle("NamespaceList"),",",qHandle("CurrentNamespaceNumber"))		
 			}
 		}
-		Set tInSQL = tInSQL _ "ORDER BY ID "_tOrder
-		Set tStatus = tInStatement.%Prepare(tInSQL)
-		If $$$ISERR(tStatus) Quit
+		
+
 		Set tMainStatement = ##class(%SQL.Statement).%New()
 		Set tMainStatement.%SelectMode = pSelectMode
-		Set tMainSQL = "SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod,$ZNSPACE As Namespace FROM Ens_Util.Log WHERE ID = ?"
-		Set qHandle("mainArgs") = 0
-		Set tSpecialConditions = ""
-		If $IsObject(pConditions) {
-			If (pConditions.Job '= "") {
-				Set tSpecialConditions = tSpecialConditions _ $LB("Job = ?")
-				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Job
-			}
-			If (pConditions.SessionID '= "") {
-				Set tSpecialConditions = tSpecialConditions _ $LB("SessionId = ?")
-				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SessionID
-			}
-			If (pConditions.SourceClass '= "") {
-				Set tSpecialConditions = tSpecialConditions _ $LB("SourceClass LIKE ?")
-				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceClass
-			}
-			If (pConditions.SourceMethod '= "") {
-				Set tSpecialConditions = tSpecialConditions _ $LB("SourceMethod LIKE ?")
-				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceMethod
-			}
-			If (pConditions.Text '= "") {
-				Set tSpecialConditions = tSpecialConditions _ $LB("Text [ ?")
-				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Text
-			}
-		}
-		If $LL(tSpecialConditions) {
-			Set tMainSQL = tMainSQL _ " AND " _ $LTS(tSpecialConditions," AND ")
-		}
-		Set tStatus = tMainStatement.%Prepare(tMainSQL)
+		Set tBaseSQL = "SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod,$ZNSPACE As Namespace FROM Ens_Util.Log"
+
+		Set tFinalSQL = tBaseSQL _ " WHERE " _ ..ConstructWhereConditions(.qHandle, pTypes, pConditions) _ " ORDER BY ID " _ tOrder
+		Set ^test("SQL") = tFinalSQL
+		Set qHandle("SQL") = tFinalSQL
+		Set tStatus = tMainStatement.%Prepare(tFinalSQL)
 		If $$$ISERR(tStatus) Quit
+		Merge tMainArgs = qHandle("mainArgs")
+		Set tRS = tMainStatement.%Execute(tMainArgs...)
 		Set qHandle("mainStmt") = tMainStatement
-		Set tTypeCount = $length(pTypes,",")
-		Set qHandle = 0
-		For i=1:1:tTypeCount {
-			Set tType = $piece(pTypes,",",i)
-			If (tType '= "") && '##class(Ens.DataType.LogType).IsValid(tType) {
-				Set tType = ##class(Ens.DataType.LogType).DisplayToLogical(tType)
-			}
-			If (tType '= "") && ##class(Ens.DataType.LogType).IsValid(tType) {
-				Set tRS = tInStatement.%Execute(tType,tArgs...)
-				If tRS.%Next() {
-					Set qHandle = qHandle + 1
-					Set qHandle("rs",qHandle) = tRS
-					Set qHandle("next",tRS.ID) = qHandle
-				}
-			}
-		}
+		Set qHandle("tRS") = tRS
+		m ^test("qhandle") =qHandle 
 	}
 	Catch {
 		Set tStatus = $$$EnsSystemError
@@ -367,7 +384,9 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary]]></FormalSpec>
 <ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[	Quit $$$OK
+<Implementation><![CDATA[
+	Zn qHandle("OriginalNamespace")
+	Quit $$$OK
 ]]></Implementation>
 </Method>
 
@@ -376,31 +395,33 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <FormalSpec><![CDATA[&qHandle:%Binary,&Row:%List,&AtEnd:%Integer=0]]></FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
+	
 	Set tStatus = $$$OK
 	Try {
 		Set Row = ""
 		While (Row = "") {
-			Set tNextID = $order(qHandle("next",""),qHandle("dir"),tRSPos)
-			If tNextID = "" {
-				Set AtEnd = 1
-				Quit
-			}
-			Kill qHandle("next",tNextID)
-			Merge tMainArgs = qHandle("mainArgs")
-			Set tDataRS = qHandle("mainStmt").%Execute(tNextID,tMainArgs...)
-			If tDataRS.%Next() {
-				s ^test("tDataRS") = tDataRS
+			s ^test("tDataRS") = qHandle("tRS")
+			//Set tDataRS = 
+			If qHandle("tRS").%Next() {
+				s tDataRS = qHandle("tRS")
 				Set Row = $lb(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$piece(tDataRS.TimeLogged," ",2),tDataRS.Namespace)
-			}
-			s ^test("Row") = Row
-			Set tCurrRS = qHandle("rs",tRSPos)
-			If tCurrRS.%Next() {
-				Set qHandle("next",tCurrRS.ID) = tRSPos
-			}
-			Else {
-				Kill qHandle("rs",tRSPos)
+			} Else {
+				If qHandle("CurrentNamespaceNumber") < qHandle("NamespaceCount") {
+					Set qHandle("CurrentNamespaceNumber") = qHandle("CurrentNamespaceNumber") + 1
+					Set qHandle("CurrentNamespace") = $P(qHandle("NamespaceList"),",",qHandle("CurrentNamespaceNumber"))
+					Zn qHandle("CurrentNamespace")
+					Set tStatus = qHandle("mainStmt").%Prepare(qHandle("SQL"))
+					If $$$ISERR(tStatus) Quit
+					Merge tMainArgs = qHandle("mainArgs")
+					Set tRS = qHandle("mainStmt").%Execute(tMainArgs...)
+					Set qHandle("tRS") = tRS
+				} Else {
+					Set AtEnd =1
+					Quit
+				}
 			}
 		}
+			
 	}
 	Catch {
 		Set tStatus = $$$EnsSystemError
@@ -471,7 +492,7 @@ or we have completed a non-zero Purge.</Description>
 	var AutoRefresh = auto.getValue();
 	
 	// Save last selections to global as default for page
-	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,"ENSVIEWER,ENSDEMO");
+	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,"ENSLOGVIEWER,ENSDEMO");
 ]]></Implementation>
 </Method>
 </Class>
