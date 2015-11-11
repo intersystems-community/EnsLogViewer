@@ -41,6 +41,10 @@ This pane displays event log activity table. User may click on a row and details
         title="Alert, Assert, Error, Info, Trace, or Warning"/>
 <column header="ID" colName="ID" style="text-align:left;" width="90"
 		title="Log Event ID"/>
+	<!--	<column header="Namespace" colName="Namespace"  style="text-align:left;" width="90"
+		title="Namespace"/>		-->
+<column header="Namespace" style="text-align:left;" width="90"
+		title="Namespace"  OnDrawCell="DrawNamespaceCell"/>		
 <column header="Time Logged" colName="TimeLogged999" id="idTimeLogged999" width="180" colExpression="{fn RIGHT(%EXTERNAL(TimeLogged),999)}"
 		title="Time the event was noted in the log" hidden="true" />
 <column header="Time Logged" colName="TimeLogged12" id="idTimeLogged12" width="180" colExpression="{fn RIGHT(%EXTERNAL(TimeLogged),12)}"
@@ -124,7 +128,7 @@ When all of these conditions are met, we hand off responsibility for the data re
 	If tTypeCount && (tTypeCount < 6) {
 		Set tIndexCount = tIndexCount + 1
 		If (tTypeCount > 1) && (tIndexCount = 1) {
-			Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLog:MultiType")
+			Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLogNS:MultiType")
 			#; Get inclusive StartID and EndID values
 			Set tStartID = $piece(tSearchCriteria,",",6)
 			Set tEndID = $piece(tSearchCriteria,",",7)
@@ -292,7 +296,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		If $$$ISERR(tStatus) Quit
 		Set tMainStatement = ##class(%SQL.Statement).%New()
 		Set tMainStatement.%SelectMode = pSelectMode
-		Set tMainSQL = "SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod FROM Ens_Util.Log WHERE ID = ?"
+		Set tMainSQL = "SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod,$ZNSPACE As Namespace FROM Ens_Util.Log WHERE ID = ?"
 		Set qHandle("mainArgs") = 0
 		Set tSpecialConditions = ""
 		If $IsObject(pConditions) {
@@ -378,8 +382,10 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 			Merge tMainArgs = qHandle("mainArgs")
 			Set tDataRS = qHandle("mainStmt").%Execute(tNextID,tMainArgs...)
 			If tDataRS.%Next() {
-				Set Row = $lb(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$piece(tDataRS.TimeLogged," ",2))
+				s ^test("tDataRS") = tDataRS
+				Set Row = $lb(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$piece(tDataRS.TimeLogged," ",2),tDataRS.Namespace)
 			}
+			s ^test("Row") = Row
 			Set tCurrRS = qHandle("rs",tRSPos)
 			If tCurrRS.%Next() {
 				Set qHandle("next",tCurrRS.ID) = tRSPos
@@ -393,6 +399,18 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		Set tStatus = $$$EnsSystemError
 	}
 	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="DrawNamespaceCell">
+<Description>
+Server-side method to write out the event text both as content and in the hover-text title.</Description>
+<FormalSpec>table:%ZEN.Component.tablePane,name:%ZEN.Datatype.string,seed:%ZEN.Datatype.string</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	//Set tTxt=$ZCVT(%query("Namespace"),"O","HTML")	
+	&html<<span title="#($Namespace)#" >#($Namespace)#</span>>
+	Quit $$$OK
 ]]></Implementation>
 </Method>
 </Class>
