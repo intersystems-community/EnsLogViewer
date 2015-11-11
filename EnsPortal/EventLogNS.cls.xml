@@ -98,6 +98,7 @@ When all of these conditions are met, we hand off responsibility for the data re
 	Set tIndexCount = 0
 
 	Set tSearchCriteria = ..GetSearchCriteria()
+	s ^test =  ..GetSearchCriteria()
 	Set tDefaults = $P(tSearchCriteria,"^",3)
 	Set tConfigName = $S(""'=..matchSource:..matchSource, 1:$P(tDefaults,",",1))
 	If (tConfigName '= "") {
@@ -404,6 +405,72 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		Set tStatus = $$$EnsSystemError
 	}
 	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="onSearchHandler">
+<Description>
+User clicked the Search button, user changed a Quick Search or Event Type criterion, 
+or we have completed a non-zero Purge.</Description>
+<Language>javascript</Language>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+	zen("pageTotal").setValue(1);
+
+	var table = this.getResultsTable();
+	var where = "";
+
+	var SortOrder = zen("SortOrder").getValue();
+
+	// modify Select TimeExecuted based on Time Format
+	var TimeFormat = zen('TimeFormat').getValue();
+	zen('idTimeLogged12').setProperty('hidden',TimeFormat == '999');
+	zen('idTimeLogged999').setProperty('hidden',TimeFormat == '12');
+
+	// whereClause, orderByClause, and groupByClause	
+	var ConfigName = zen("ConfigName").value;
+	var SourceClass = zen("SourceClass").value;
+	var SourceMethod = zen("SourceMethod").value;
+	var Text = zen("Text").value;
+	var Job = zen("Job").value;
+
+	var StartId = zen("StartId").value;
+	var EndId = zen("EndId").value;
+	var StartTime = zen("StartTime").value;
+	var EndTime = zen("EndTime").value;
+	var SessionId = zen("SessionId").value;
+
+	var Assert = zen("Assert").value;
+	var Error = zen("Error").value;
+	var Warning = zen("Warning").value;
+	var Info = zen("Info").value;
+	var Trace = zen("Trace").value;
+	var Alert = zen("Alert").value;
+	
+	var Defaults = ConfigName+","+SourceClass+","+SourceMethod+","+Text+","+Job+","+StartId+","+EndId+","+StartTime+","+EndTime+","+SessionId;
+	var EventType = Assert+","+Error+","+Warning+","+Info+","+Trace+","+Alert;
+	
+	// call server method to build the where clause
+	var where = zenPage.GetWhereClause(Defaults,EventType);
+	table.whereClause = where;
+	table.orderByClause = "%ID";
+	
+	if (SortOrder == "Newest First") table.orderByClause = "%ID desc";
+	
+	rows = zen('MaxRows');
+	var MaxRows = parseInt(rows.value);
+	if (MaxRows > 10000) MaxRows = 100;
+	if (MaxRows < 0) MaxRows = 1;
+	
+	// Get the current expando state and save it
+	var States = zenPage.expandoState();
+	
+	// Get the Auto-Refresh choice and save it
+	var auto = zen("chkRefresh");
+	var AutoRefresh = auto.getValue();
+	
+	// Save last selections to global as default for page
+	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh);
 ]]></Implementation>
 </Method>
 </Class>
