@@ -261,5 +261,139 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 	Set NamespceList = $P(SearchCriteria,"^",8)
 ]]></Implementation>
 </Method>
+
+<Method name="MultiTypeExecute">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&qHandle:%Binary,pTypes:%String="",pDescending:%Boolean=1,pSelectMode:%Integer=2,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Try {
+		Set tOrder = $select(pDescending: "DESC", 1: "ASC")
+		Set qHandle("dir") = $select(pDescending: -1, 1: 1)
+		Set tInStatement = ##class(%SQL.Statement).%New()
+		Set tInStatement.%SelectMode = 0
+		Set tInSQL = "SELECT ID FROM Ens_Util.Log WHERE Type = ? "
+		Set tArgs = 0
+		If $IsObject(pConditions) {
+			If (pConditions.MinID '= "") {
+				Set tInSQL = tInSQL _ "AND ID > ? "
+				Set tArgs = tArgs + 1
+				Set tArgs(tArgs) = pConditions.MinID
+			}
+			If (pConditions.MaxID '= "") {
+				Set tInSQL = tInSQL _ "AND ID < ? "
+				Set tArgs = tArgs + 1
+				Set tArgs(tArgs) = pConditions.MaxID
+			}
+		}
+		Set tInSQL = tInSQL _ "ORDER BY ID "_tOrder
+		Set tStatus = tInStatement.%Prepare(tInSQL)
+		If $$$ISERR(tStatus) Quit
+		Set tMainStatement = ##class(%SQL.Statement).%New()
+		Set tMainStatement.%SelectMode = pSelectMode
+		Set tMainSQL = "SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod FROM Ens_Util.Log WHERE ID = ?"
+		Set qHandle("mainArgs") = 0
+		Set tSpecialConditions = ""
+		If $IsObject(pConditions) {
+			If (pConditions.Job '= "") {
+				Set tSpecialConditions = tSpecialConditions _ $LB("Job = ?")
+				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Job
+			}
+			If (pConditions.SessionID '= "") {
+				Set tSpecialConditions = tSpecialConditions _ $LB("SessionId = ?")
+				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SessionID
+			}
+			If (pConditions.SourceClass '= "") {
+				Set tSpecialConditions = tSpecialConditions _ $LB("SourceClass LIKE ?")
+				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceClass
+			}
+			If (pConditions.SourceMethod '= "") {
+				Set tSpecialConditions = tSpecialConditions _ $LB("SourceMethod LIKE ?")
+				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceMethod
+			}
+			If (pConditions.Text '= "") {
+				Set tSpecialConditions = tSpecialConditions _ $LB("Text [ ?")
+				Set qHandle("mainArgs") = qHandle("mainArgs") + 1
+				Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Text
+			}
+		}
+		If $LL(tSpecialConditions) {
+			Set tMainSQL = tMainSQL _ " AND " _ $LTS(tSpecialConditions," AND ")
+		}
+		Set tStatus = tMainStatement.%Prepare(tMainSQL)
+		If $$$ISERR(tStatus) Quit
+		Set qHandle("mainStmt") = tMainStatement
+		Set tTypeCount = $length(pTypes,",")
+		Set qHandle = 0
+		For i=1:1:tTypeCount {
+			Set tType = $piece(pTypes,",",i)
+			If (tType '= "") && '##class(Ens.DataType.LogType).IsValid(tType) {
+				Set tType = ##class(Ens.DataType.LogType).DisplayToLogical(tType)
+			}
+			If (tType '= "") && ##class(Ens.DataType.LogType).IsValid(tType) {
+				Set tRS = tInStatement.%Execute(tType,tArgs...)
+				If tRS.%Next() {
+					Set qHandle = qHandle + 1
+					Set qHandle("rs",qHandle) = tRS
+					Set qHandle("next",tRS.ID) = qHandle
+				}
+			}
+		}
+	}
+	Catch {
+		Set tStatus = $$$EnsSystemError
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="MultiTypeClose">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&qHandle:%Binary]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="MultiTypeFetch">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&qHandle:%Binary,&Row:%List,&AtEnd:%Integer=0]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = $$$OK
+	Try {
+		Set Row = ""
+		While (Row = "") {
+			Set tNextID = $order(qHandle("next",""),qHandle("dir"),tRSPos)
+			If tNextID = "" {
+				Set AtEnd = 1
+				Quit
+			}
+			Kill qHandle("next",tNextID)
+			Merge tMainArgs = qHandle("mainArgs")
+			Set tDataRS = qHandle("mainStmt").%Execute(tNextID,tMainArgs...)
+			If tDataRS.%Next() {
+				Set Row = $lb(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$piece(tDataRS.TimeLogged," ",2))
+			}
+			Set tCurrRS = qHandle("rs",tRSPos)
+			If tCurrRS.%Next() {
+				Set qHandle("next",tCurrRS.ID) = tRSPos
+			}
+			Else {
+				Kill qHandle("rs",tRSPos)
+			}
+		}
+	}
+	Catch {
+		Set tStatus = $$$EnsSystemError
+	}
+	Quit tStatus
+]]></Implementation>
+</Method>
 </Class>
 </Export>
