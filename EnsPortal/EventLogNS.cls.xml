@@ -430,6 +430,27 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 ]]></Implementation>
 </Method>
 
+<Method name="GetEnsembleNamespaces">
+<Description>
+Returns info about availible Ensemble-enabled Namespaces</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	Set tStatus = ##class(%CSP.Portal.Utils).%GetNamespaceList(.tNSList)
+	If $$$ISERR(tStatus) Quit tStatus
+	Set tNamespace = $O(tNSList(""))
+	Set tEnsNSList = ""
+	While tNamespace '= "" {
+		Set tEnabled = $Lg(tNSList(tNamespace),1)
+		If tEnabled && ##class(%EnsembleMgr).IsEnsembleNamespace() {
+			Set tEnsNSList = tEnsNSList _ $lb(tNamespace)
+		}
+		Set tNamespace = $O(tNSList(tNamespace))
+	}
+	return tEnsNSList
+]]></Implementation>
+</Method>
+
 <Method name="onSearchHandler">
 <Description>
 User clicked the Search button, user changed a Quick Search or Event Type criterion, 
