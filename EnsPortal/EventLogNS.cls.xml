@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2015.1.1 (Build 505U)" ts="2015-11-13 15:51:14">
 <Class name="EnsPortal.EventLogNS">
 <Description>
 This is the Event Log page of the ZEN Ensemble application.
@@ -7,6 +7,7 @@ With namespace support</Description>
 <IncludeCode>Ensemble</IncludeCode>
 <Super>EnsPortal.EventLog</Super>
 <System>4</System>
+<TimeChanged>63869,56426.042055</TimeChanged>
 <TimeCreated>60310,50851.071342</TimeCreated>
 
 <Parameter name="BaseSQL">
@@ -84,6 +85,147 @@ This pane displays event log activity table. User may click on a row and details
 </pane>
 ]]></Data>
 </XData>
+
+<XData name="searchPane">
+<Description>
+This pane displays the search criteria. We provide defaults and user can change them.
+User's values are saved and used as future defaults for this user.
+Clicking a drop down list item will refresh the table immediately. 
+Text fields you are required to click [Enter] or the "Search" button.</Description>
+<XMLNamespace>http://www.intersystems.com/zen</XMLNamespace>
+<Data><![CDATA[
+<pane xmlns="http://www.intersystems.com/zen" >
+<vgroup id="mainPanel" enclosingClass="menuPanel"  valign="top">
+<form name="searchForm" id="searchForm" layout="vertical" cellStyle="padding: 2px 10px; font-size:0.8em;">
+
+<expando name="expNS" id="expNS" caption="Select Namespaces" expanded="false" 
+        childIndent="16px" containerStyle="padding:10px 10px 0px 10px;" >
+<hgroup valign="top">
+<vgroup>
+<multiSelectSet id="nslist"
+enclosingStyle="overflow-y: scroll; height: 300px; z-index:1000; position:absolute; background: #ddd; width: 200px;"
+/>
+</vgroup>
+</hgroup>
+</expando>
+
+<expando name="expQuick" id="expQuick" caption="Quick Search" expanded="true" 
+        childIndent="16px" containerStyle="padding:10px 10px 0px 10px;"  >
+<hgroup valign="top">
+<vgroup>
+<select label="Auto-Refresh" name="chkRefresh" id="chkRefresh" 
+       displayList="None,30 Seconds,60 Seconds,2 Minutes,5 Minutes" valueList="None,30000,60000,120000,300000" value="None" showEmpty="false"
+        onclick="zenPage.changeRefresh();"/>
+<select label="Sort Order" name="SortOrder" id="SortOrder" 
+       displayList="Newest First,Oldest First" valueList="Newest First,Oldest First" value="Newest First" showEmpty="false"
+         onchange="zenPage.doSearch();"/>
+<select label="Time Format" name="TimeFormat" id="TimeFormat" 
+        displayList="Complete,Time Only" valueList="999,12" value="999" showEmpty="false"
+         onchange="zenPage.doSearch();"/>
+<spacer width="10" />
+</vgroup>
+<spacer width="10" />
+<vgroup valign="top">
+<label name="pageTotal" id="pageTotal" label="Page" value="#(%page.currentPage)#" enclosingStyle="font-size:0.8em;padding-bottom:5px;padding-top:2px;"
+      title="Current page of the display table, based on Page Size and the current search criteria."/>
+<select label="Page Size" name="MaxRows" id="MaxRows" 
+        displayList="10,20,30,50,100,200,500,1000,2000" valueList="10,20,30,50,100,200,500,1000,2000" value="#(%page.pageSize)#" showEmpty="false"
+         onchange="zenPage.doSearch();"/>
+</vgroup>
+</hgroup>
+</expando>
+<expando name="expInclude" id="expInclude" caption="Event Types" expanded="true" 
+        childIndent="16px" containerStyle="padding:10px 10px 0px 10px;" >
+<hgroup>
+<vgroup cellStyle="font-size:0.8em">
+<checkbox name="Error" id="Error" caption="Error" value="1" onclick="zenPage.doSearch();"/>
+<checkbox name="Alert" id="Alert" caption="Alert" value="1" onclick="zenPage.doSearch();"/>
+<checkbox name="Info" id="Info" caption="Info" value="1" onclick="zenPage.doSearch();"/>
+</vgroup>
+<spacer width="10" />
+<vgroup cellStyle="font-size:0.8em">
+<checkbox name="Warning" id="Warning" caption="Warning" value="1" onclick="zenPage.doSearch();"/>
+<checkbox name="Trace" id="Trace" caption="Trace" value="1" onclick="zenPage.doSearch();"/>
+<checkbox name="Assert" id="Assert" caption="Assert" value="1" onclick="zenPage.doSearch();" />
+</vgroup>
+</hgroup>
+</expando>
+<expando name="expDetails" id="expDetails" caption="Search Events By..." expanded="true" 
+        childIndent="16px" containerStyle="padding:10px 10px 0px 10px;" >
+<vgroup valign="top">
+<hgroup valign="top">
+<dateText name="StartTime" id="StartTime" label="Start Time" size="18" showTime="true" defaultTime="00:00:00" containerStyle="padding:0px 3px 0px 0px;"
+          title="Entering a date/time value in this field will restrict the search results to times after or equal to the given value" />
+<spacer width="10" />
+<text name="StartId" id="StartId" label="Start ID" size="9" 
+          title="Entering an ID value in this field will restrict the search results to Event Log IDs greater than or equal to the given value" />
+</hgroup>
+<hgroup valign="top">
+<dateText name="EndTime" id="EndTime" label="End Time" size="18" showTime="true" defaultTime="23:59:59" containerStyle="padding:0px 3px 0px 0px;"
+          title="Entering a date/time value in this field will restrict the search results to times before or equal to the given value" />
+<spacer width="10" />
+<text name="EndId" id="EndId" label="End ID" size="9"   
+          title="Entering an ID value in this field will restrict the search results to Event Log IDs less than or equal to the given value" />
+</hgroup>
+<hgroup valign="top">
+<pane paneName="configNameControl" />
+<spacer width="10" />
+</hgroup>
+<hgroup valign="top">
+<text name="SourceClass" id="SourceClass" label="Source Class" size="21" 
+          title="Entering a class name in this field will restrict the search results to log events generated in the given class.  The SQL wildcard '%' may be used." />
+<spacer width="10" />
+<text name="SessionId" id="SessionId" label="Session ID" size="9"  
+          title="Entering an ID value in this field will restrict the search results to log events generated in the given session" />
+</hgroup>
+<hgroup valign="top">
+<text name="SourceMethod" id="SourceMethod" label="Source Method" size="21" 
+           title="Entering a method name in this field will restrict the search results to log events generated in the given method.  The SQL wildcard '%' may be used." />
+<spacer width="10" />
+<text name="Job" id="Job" label="Job" size="9" 
+          title="Entering a Job ID value in this field will restrict the search results to log events generated in the given job or process" />
+</hgroup>
+</vgroup>
+<text name="Text" id="Text" label="Text" size="37" maxlength="50"
+          title="Entering a text string value in this field will restrict the search results to log events whose text content contains the given string" />
+</expando>
+<expando name="expPurge" id="expPurge" caption="Purge Event Log" expanded="false" 
+        childIndent="16px" containerStyle="padding:10px 10px 0px 10px;" >
+<hgroup valign="top">
+<vgroup>
+<label name="logTotal" id="logTotal" label="Current Count" value="#(%page.GetCount())#" ondblclick="zenPage.countReset();" enclosingStyle="font-size:0.8em;padding-bottom:3px;"
+      title="Total number of Event Log entries. To update, double-click the field."  />
+<label label="Do Not Purge Most Recent" labelStyle="white-space:normal;"
+      title="Set a value to avoid purging the most recent Event Log entries."/>
+<hgroup>
+<text name="keepDays" id="keepDays" size="3" maxlength="4" value="7"/>
+<spacer width="4px" />
+<label label="Days"/>
+</hgroup>
+<spacer height="5px" />
+<button id="startPurgeButton" controlClass="commandButton" caption="Purge" onclick="zenPage.startPurge();"
+        title="Start purging Event Log entries." />
+</vgroup>
+</hgroup>
+</expando>
+</form>
+</vgroup>
+</pane>
+]]></Data>
+</XData>
+
+<Method name="%OnAfterCreatePage">
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+    Set tSC = ##super()
+    If $$$ISERR(tSC) Quit tSC
+ 
+    set namespaces = $listtostring(..GetEnsembleNamespaces())
+    set %page.%GetComponentById("nslist").valueList = namespaces
+    
+    return $$$OK
+]]></Implementation>
+</Method>
 
 <Method name="CheckConditions">
 <Description><![CDATA[
@@ -524,7 +666,7 @@ or we have completed a non-zero Purge.</Description>
 	var AutoRefresh = auto.getValue();
 	
 	// Save last selections to global as default for page
-	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,"ENSDEMO,ENSLOGVIEWER");
+    zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,zen('nslist').getValue());
 ]]></Implementation>
 </Method>
 </Class>
