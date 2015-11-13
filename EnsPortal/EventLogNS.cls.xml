@@ -281,7 +281,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		
 	Set tTypeCount = $length(pTypes,",")
 	s ^test("pTypes")=pTypes
-	If tTypeCount>0 {
+	If ((pTypes'="") && (tTypeCount>0)) {
 		Set tTypesSQL=""
 		For i=1:1:tTypeCount {
 			Set tType = $piece(pTypes,",",i)
@@ -414,7 +414,7 @@ Returns info about availible Ensemble-enabled Namespaces</Description>
 <Description>
 	Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
 This is OK (for now) because the main StartID and EndID restrictions use conditions on "%ID"</Description>
-<FormalSpec>tMinID,tMaxID</FormalSpec>
+<FormalSpec><![CDATA[&pMinID:%Integer,&pMaxID:%Integer]]></FormalSpec>
 <Implementation><![CDATA[
 	Set tTable = ..%GetComponentById("table")
 	If $IsObject(tTable) && (tTable.sql '= "") {
@@ -430,10 +430,10 @@ This is OK (for now) because the main StartID and EndID restrictions use conditi
 						Set tOp = $piece($piece(tCondition,tProp_" ",2)," ",1)
 						Set tVal = $piece(tCondition," ",*)
 						If (tOp = "<") {
-							Set tMaxID = $select(tVal = "": tMaxID, tMaxID = "": tVal, tMaxID < tVal: tMaxID, 1: tVal)
+							Set pMaxID = $select(tVal = "": pMaxID, pMaxID = "": tVal, pMaxID < tVal: pMaxID, 1: tVal)
 						}
 						ElseIf (tOp = ">") {
-							Set tMinID = $select(tVal = "": tMinID, tMinID = "": tVal, tMinID > tVal: tMinID, 1: tVal)
+							Set pMinID = $select(tVal = "": pMinID, pMinID = "": tVal, pMinID > tVal: pMinID, 1: tVal)
 						}
 					}
 				}
