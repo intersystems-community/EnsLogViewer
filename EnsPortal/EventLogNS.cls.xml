@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2015.1.1 (Build 505U)" ts="2015-11-13 15:51:14">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2015.1 (Build 425U)" ts="2015-11-13 16:07:03">
 <Class name="EnsPortal.EventLogNS">
 <Description>
 This is the Event Log page of the ZEN Ensemble application.
@@ -7,7 +7,7 @@ With namespace support</Description>
 <IncludeCode>Ensemble</IncludeCode>
 <Super>EnsPortal.EventLog</Super>
 <System>4</System>
-<TimeChanged>63869,56426.042055</TimeChanged>
+<TimeChanged>63869,57965.643065</TimeChanged>
 <TimeCreated>60310,50851.071342</TimeCreated>
 
 <Parameter name="BaseSQL">
@@ -556,17 +556,21 @@ Returns info about availible Ensemble-enabled Namespaces</Description>
 <ClassMethod>1</ClassMethod>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
+	Set tOriginalNamespace = $Namespace
 	Set tStatus = ##class(%CSP.Portal.Utils).%GetNamespaceList(.tNSList)
 	If $$$ISERR(tStatus) Quit tStatus
 	Set tNamespace = $O(tNSList(""))
 	Set tEnsNSList = ""
 	While tNamespace '= "" {
 		Set tEnabled = $LG(tNSList(tNamespace),1)
+		Zn tNamespace
 		If tEnabled && ##class(%EnsembleMgr).IsEnsembleNamespace() {
 			Set tEnsNSList = tEnsNSList _ $LB(tNamespace)
 		}
 		Set tNamespace = $O(tNSList(tNamespace))
 	}
+
+	Zn tOriginalNamespace
 	return tEnsNSList
 ]]></Implementation>
 </Method>
