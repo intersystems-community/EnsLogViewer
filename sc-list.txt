@@ -1,1 +1,1 @@
-EnsPortal.EventLogNS.cls
+EnsPortal.EventLogNS.CLS
