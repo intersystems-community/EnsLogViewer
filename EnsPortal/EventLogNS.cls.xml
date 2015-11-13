@@ -114,8 +114,7 @@ Returns <query>MultiTypeNS</query> class query]]></Description>
 			Set tTypes = tTypes _ $LB($LG(tEventNames,i))
 		}
 	}
-
-	Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLogNS:MultiType")
+	
 	#; Get inclusive StartID and EndID values
 	Set tStartID = $P(tSearchCriteria,",",6)
 	Set tEndID = $P(tSearchCriteria,",",7)
@@ -143,8 +142,9 @@ Returns <query>MultiTypeNS</query> class query]]></Description>
 	Set tConditions.StartTime = tStartTime
 	Set tConditions.EndTime = tEndTime
 	
-	
 	Set tDescending = $S($P(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
+	
+	Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLogNS:MultiType")
 	Set pSC = tRS.Execute($LTS(tTypes),tDescending,,tConditions)
 	If $$$ISERR(pSC) Quit ""
 	
@@ -332,7 +332,15 @@ Construct ORDER BY part of an SQL statement. </Description>
 			Set qHandle("NamespaceCount") = $L(qHandle("NamespaceList"),",")
 			Set qHandle("CurrentNamespaceNumber") = 1
 			Set qHandle("CurrentNamespace") = $P(qHandle("NamespaceList"),",",qHandle("CurrentNamespaceNumber"))		
+		} Else {
+			Set qHandle("NamespaceList") = $Namespace
+			Set qHandle("OriginalNamespace") = $Namespace
+			Set qHandle("NamespaceCount") = 1
+			Set qHandle("CurrentNamespaceNumber") = 1
+			Set qHandle("CurrentNamespace") = $Namespace
 		}
+		
+		Zn qHandle("CurrentNamespace")
 		
 		Set tMainStatement = ##class(%SQL.Statement).%New()
 		Set tMainStatement.%SelectMode = pSelectMode
@@ -516,7 +524,7 @@ or we have completed a non-zero Purge.</Description>
 	var AutoRefresh = auto.getValue();
 	
 	// Save last selections to global as default for page
-	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,"ENSLOGVIEWER,ENSDEMO");
+	zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,"ENSDEMO,ENSLOGVIEWER");
 ]]></Implementation>
 </Method>
 </Class>
