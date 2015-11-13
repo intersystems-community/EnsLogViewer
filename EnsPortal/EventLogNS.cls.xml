@@ -327,14 +327,12 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <Implementation><![CDATA[
 	Set tStatus = $$$OK
 	Try {
-		If $IsObject(pConditions) {
-			If (pConditions.NamespaceList '= "") {
-				Set qHandle("NamespaceList") = pConditions.NamespaceList
-				Set qHandle("OriginalNamespace") = $Namespace
-				Set qHandle("NamespaceCount") = $L(qHandle("NamespaceList"),",")
-				Set qHandle("CurrentNamespaceNumber") = 1
-				Set qHandle("CurrentNamespace") = $P(qHandle("NamespaceList"),",",qHandle("CurrentNamespaceNumber"))		
-			}
+		If (($IsObject(pConditions)) && (pConditions.NamespaceList '= "")) {
+			Set qHandle("NamespaceList") = pConditions.NamespaceList
+			Set qHandle("OriginalNamespace") = $Namespace
+			Set qHandle("NamespaceCount") = $L(qHandle("NamespaceList"),",")
+			Set qHandle("CurrentNamespaceNumber") = 1
+			Set qHandle("CurrentNamespace") = $P(qHandle("NamespaceList"),",",qHandle("CurrentNamespaceNumber"))		
 		}
 		
 		Set tMainStatement = ##class(%SQL.Statement).%New()
