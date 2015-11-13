@@ -369,7 +369,6 @@ Construct ORDER BY part of an SQL statement. </Description>
 <FormalSpec><![CDATA[&qHandle:%Binary,&Row:%List,&AtEnd:%Integer=0]]></FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	
 	Set tStatus = $$$OK
 	Try {
 		Set Row = ""
@@ -393,7 +392,6 @@ Construct ORDER BY part of an SQL statement. </Description>
 				}
 			}
 		}
-			
 	}
 	Catch {
 		Set tStatus = $$$EnsSystemError
