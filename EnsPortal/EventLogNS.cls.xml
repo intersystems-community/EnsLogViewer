@@ -95,102 +95,88 @@ When all of these conditions are met, we hand off responsibility for the data re
 	Do:..#CANCANCELSEARCH ..PrepareCancel()
 	Set pSC = $$$OK
 	Set tRS = ""
-	Set tIndexCount = 0
 
 	Set tSearchCriteria = ..GetSearchCriteria()
 	s ^test =  ..GetSearchCriteria()
+	
 	Set tDefaults = $P(tSearchCriteria,"^",3)
 	Set tConfigName = $S(""'=..matchSource:..matchSource, 1:$P(tDefaults,",",1))
-
-
 	Set tStartTime = $P(tDefaults,",",8)
 	Set tEndTime = $P(tDefaults,",",9)
-	/*If (tStartTime '= "") || (tEndTime '= "") {
-		Set tIndexCount = tIndexCount + 1
-	}*/
-
+	
 	Set tEventTypes = $P(tSearchCriteria,"^",4)
 	Set tTypeCount = 0
-	//If tIndexCount = 0 {
-		Set tEventNames = $lb("Assert","Error","Warning","Info","Trace","Alert")
-		Set tTypes = ""
-	//}
+	Set tEventNames = $lb("Assert","Error","Warning","Info","Trace","Alert")
+	Set tTypes = ""
 	For i=1:1:6 {
 		Set tInclude = $P(tEventTypes,",",i)
-		set ^test("tInclude",i)=$g(tInclude)
 		If $S(tInclude="true":1,tInclude="false":0,1:tInclude) {
-			Set tTypeCount = tTypeCount + 1
-			//If tIndexCount = 0 
+			Set tTypeCount = tTypeCount + 1 
 			Set tTypes = tTypes _ $listbuild($listget(tEventNames,i))
 		}
 	}
-	set ^test("tTypes")=$g(tTypes,"nope")
-	//If tTypeCount && (tTypeCount < 6) {
-		Set tIndexCount = tIndexCount + 1
-	//	If (tTypeCount > 1) && (tIndexCount = 1) {
-			Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLogNS:MultiType")
-			#; Get inclusive StartID and EndID values
-			Set tStartID = $piece(tSearchCriteria,",",6)
-			Set tEndID = $piece(tSearchCriteria,",",7)
-			If (tStartID && tEndID) && (tEndID < tStartID) {
-				Set tTempID = tStartID
-				Set tStartID = tEndID
-				Set tEndID = tTempID
-			}
-			Set tMinID = $select(tStartID: tStartID-1, 1: "")
-			Set tMaxID = $select(tEndID: tEndID+1, 1: "")
-			#; Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
-			#; This is OK (for now) because the main StartID and EndID restrictions use conditions on "%ID"
-			Set tTable = ..%GetComponentById("table")
-			If $IsObject(tTable) && (tTable.sql '= "") {
-				Set tModifiers = $piece(tTable.sql," FROM Ens_Util.Log",2)
-				If (tModifiers '= "") && (tModifiers [ " WHERE ") {
-					Set tWhere = $piece($piece(tModifiers," ORDER BY ID",1),"WHERE ",2)
-					If (tWhere '= "") {
-						For i=1:1:$length(tWhere," AND ") {
-							#; remove trailing whitespace so the value is at end
-							Set tCondition = $zstrip($piece(tWhere," AND ",i),">W")
-							Set tProp = $piece(tCondition," ",1)
-							If (tProp = "ID") {
-								Set tOp = $piece($piece(tCondition,tProp_" ",2)," ",1)
-								Set tVal = $piece(tCondition," ",*)
-								If (tOp = "<") {
-									Set tMaxID = $select(tVal = "": tMaxID, tMaxID = "": tVal, tMaxID < tVal: tMaxID, 1: tVal)
-								}
-								ElseIf (tOp = ">") {
-									Set tMinID = $select(tVal = "": tMinID, tMinID = "": tVal, tMinID > tVal: tMinID, 1: tVal)
-								}
-							}
+
+	Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLogNS:MultiType")
+	#; Get inclusive StartID and EndID values
+	Set tStartID = $piece(tSearchCriteria,",",6)
+	Set tEndID = $piece(tSearchCriteria,",",7)
+	If (tStartID && tEndID) && (tEndID < tStartID) {
+		Set tTempID = tStartID
+		Set tStartID = tEndID
+		Set tEndID = tTempID
+	}
+	Set tMinID = $select(tStartID: tStartID-1, 1: "")
+	Set tMaxID = $select(tEndID: tEndID+1, 1: "")
+	#; Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
+	#; This is OK (for now) because the main StartID and EndID restrictions use conditions on "%ID"
+	Set tTable = ..%GetComponentById("table")
+	If $IsObject(tTable) && (tTable.sql '= "") {
+		Set tModifiers = $piece(tTable.sql," FROM Ens_Util.Log",2)
+		If (tModifiers '= "") && (tModifiers [ " WHERE ") {
+			Set tWhere = $piece($piece(tModifiers," ORDER BY ID",1),"WHERE ",2)
+			If (tWhere '= "") {
+				For i=1:1:$length(tWhere," AND ") {
+					#; remove trailing whitespace so the value is at end
+					Set tCondition = $zstrip($piece(tWhere," AND ",i),">W")
+					Set tProp = $piece(tCondition," ",1)
+					If (tProp = "ID") {
+						Set tOp = $piece($piece(tCondition,tProp_" ",2)," ",1)
+						Set tVal = $piece(tCondition," ",*)
+						If (tOp = "<") {
+							Set tMaxID = $select(tVal = "": tMaxID, tMaxID = "": tVal, tMaxID < tVal: tMaxID, 1: tVal)
+						}
+						ElseIf (tOp = ">") {
+							Set tMinID = $select(tVal = "": tMinID, tMinID = "": tVal, tMinID > tVal: tMinID, 1: tVal)
 						}
 					}
 				}
 			}
-			Set tConditions = ##class(%ZEN.proxyObject).%New()
-			Set:tMinID tConditions.MinID = tMinID
-			Set:tMaxID tConditions.MaxID = tMaxID
-			// Pick up any other restrictions
-			Set tConditions.ConfigName = tConfigName
-			Set tConditions.SourceClass = $piece(tDefaults,",",2)
-			Set tConditions.SourceMethod = $piece(tDefaults,",",3)
-			Set tConditions.Text = $piece(tDefaults,",",4)
-			Set tConditions.Job = $piece(tDefaults,",",5)
-			Set tConditions.SessionID = $piece(tDefaults,",",10)
-			Set tConditions.NamespaceList = $P(tSearchCriteria,"^",8)
-			Set tConditions.StartTime = tStartTime
-			Set tConditions.EndTime = tEndTime
-			
-			
-			Set tDescending = $select($piece(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
-			Set pSC = tRS.Execute($listtostring(tTypes),tDescending,,tConditions)
-			set ^test("pSC")=$System.Status.GetErrorText(pSC)
-			If $$$ISERR(pSC) Quit ""
-			Set pInfo.queryText = "EnsPortal.EventLog:MultiType class query; " _ "sql!!!!!"
-			Set pInfo.queryExecuted = 1
-			set ^test("tRS")=tRS
-			Quit tRS
-	//	}
-	//}
-
+		}
+	}
+	
+	Set tConditions = ##class(%ZEN.proxyObject).%New()
+	Set:tMinID tConditions.MinID = tMinID
+	Set:tMaxID tConditions.MaxID = tMaxID
+	// Pick up any other restrictions
+	Set tConditions.ConfigName = tConfigName
+	Set tConditions.SourceClass = $piece(tDefaults,",",2)
+	Set tConditions.SourceMethod = $piece(tDefaults,",",3)
+	Set tConditions.Text = $piece(tDefaults,",",4)
+	Set tConditions.Job = $piece(tDefaults,",",5)
+	Set tConditions.SessionID = $piece(tDefaults,",",10)
+	Set tConditions.NamespaceList = $P(tSearchCriteria,"^",8)
+	Set tConditions.StartTime = tStartTime
+	Set tConditions.EndTime = tEndTime
+	
+	
+	Set tDescending = $select($piece(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
+	Set pSC = tRS.Execute($listtostring(tTypes),tDescending,,tConditions)
+	If $$$ISERR(pSC) Quit ""
+	Set pInfo.queryText = "EnsPortal.EventLog:MultiType class query; " _ "sql!!!!!"
+	Set pInfo.queryExecuted = 1
+	Quit tRS
+	
+	S ^test("zzz")=1
 
 	Set tMaxRows = 0
 	If (tIndexCount > 1) {
