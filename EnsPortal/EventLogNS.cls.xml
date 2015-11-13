@@ -236,55 +236,55 @@ Construct WHERE <Condition(s)> part of an SQL statement. Returns empty string if
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	Set qHandle("mainArgs") = 0
-	Set tSpecialConditions = ""
+	Set tConditions = ""
 	If $IsObject(pConditions) {
 		If (pConditions.MinID '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("ID > ?")
+			Set tConditions = tConditions _ $LB("ID > ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.MinID
 		}
 		If (pConditions.MaxID '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("ID < ?")
+			Set tConditions = tConditions _ $LB("ID < ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.MaxID
 		}
 		If (pConditions.Job '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("Job = ?")
+			Set tConditions = tConditions _ $LB("Job = ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Job
 		}
 		If (pConditions.SessionID '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("SessionId = ?")
+			Set tConditions = tConditions _ $LB("SessionId = ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SessionID
 		}
 		If (pConditions.SourceClass '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("SourceClass LIKE ?")
+			Set tConditions = tConditions _ $LB("SourceClass LIKE ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceClass
 		}
 		If (pConditions.SourceMethod '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("SourceMethod LIKE ?")
+			Set tConditions = tConditions _ $LB("SourceMethod LIKE ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceMethod
 		}
 		If (pConditions.Text '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("Text [ ?")
+			Set tConditions = tConditions _ $LB("Text [ ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Text
 		}
 		If (pConditions.StartTime '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("TimeLogged >= ?")
+			Set tConditions = tConditions _ $LB("TimeLogged >= ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.StartTime
 		}
 		If (pConditions.EndTime '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("TimeLogged <= ?")
+			Set tConditions = tConditions _ $LB("TimeLogged <= ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.EndTime
 		}
 		If (pConditions.ConfigName '= "") {
-			Set tSpecialConditions = tSpecialConditions _ $LB("ConfigName LIKE ?")
+			Set tConditions = tConditions _ $LB("ConfigName LIKE ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
 			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.ConfigName
 		}
@@ -301,9 +301,9 @@ Construct WHERE <Condition(s)> part of an SQL statement. Returns empty string if
 			
 		}
 		Set tTypesSQL = $LTS(tTypesSQL,", ")
-		Set tSpecialConditions = tSpecialConditions _ $LB("Type IN (" _ tTypesSQL _ ")")
+		Set tConditions = tConditions _ $LB("Type IN (" _ tTypesSQL _ ")")
 	}
-	Quit $LTS(tSpecialConditions," AND ")
+	Quit $LTS(tConditions," AND ")
 ]]></Implementation>
 </Method>
 
