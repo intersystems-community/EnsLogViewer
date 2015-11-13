@@ -9,4 +9,4 @@ Ensemble Log Viewer with namespace support.
 
 ## Screenshots
 
-![EnsLogViewer screenshot](http://i.imgur.com/qEK0Ly3.png "EnsLogViewer screenshot")
+![EnsLogViewer screenshot](http://i.imgur.com/TW4EicG.png "EnsLogViewer screenshot")
