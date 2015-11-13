@@ -97,7 +97,6 @@ Returns <query>MultiTypeNS</query> class query]]></Description>
 	Set tRS = ""
 
 	Set tSearchCriteria = ..GetSearchCriteria()
-	s ^test =  ..GetSearchCriteria()
 	
 	Set tDefaults = $P(tSearchCriteria,"^",3)
 	Set tConfigName = $S(""'=..matchSource:..matchSource, 1:$P(tDefaults,",",1))
@@ -168,7 +167,6 @@ Save user's last search criteria into global for page default</Description>
 	For p = 1:1:$L(EventType,",") Set pv=$P(EventType,",",p),$P(EventType,",",p) = $S(pv="true":1,pv="false":0,1:pv)
 	For p = 1:1:$L(States,",") Set pv=$P(States,",",p),$P(States,",",p) = $S(pv="true":1,pv="false":0,1:pv)
 	Set AutoRefresh = $S(AutoRefresh="true":1,AutoRefresh="false":0,1:AutoRefresh)
-	s ^test(3) = NamespaceList
 	Do ..SetDefaultString(SortOrder_"^"_TimeFormat_"^"_Defaults_"^"_EventType_"^"_MaxRows_"^"_States_"^"_AutoRefresh _"^"_ NamespaceList)
 ]]></Implementation>
 </Method>
@@ -427,7 +425,7 @@ Returns info about availible Ensemble-enabled Namespaces</Description>
 
 <Method name="AdjustMinMax">
 <Description>
-	Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
+Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
 This is OK (for now) because the main StartID and EndID restrictions use conditions on "%ID"</Description>
 <FormalSpec><![CDATA[&pMinID:%Integer,&pMaxID:%Integer]]></FormalSpec>
 <Implementation><![CDATA[
