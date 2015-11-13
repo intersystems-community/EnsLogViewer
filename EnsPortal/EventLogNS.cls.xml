@@ -219,6 +219,21 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <Parameter name="ROWSPEC" value="Type:Ens.DataType.LogType,ID:%String,TimeLogged:%String,SessionId:%String,Job:%String,ConfigName:%String,Text:%String,TraceCat:%String,SourceClass:%String,SourceMethod:%String,TimeLogged999:%String,TimeLogged12:%String,Namespace:%String"/>
 </Query>
 
+<Method name="ConstructWhereCause">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&qHandle:%Binary,pTypes,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	Set tWhereConditions = ..ConstructWhereConditions(.qHandle, pTypes, pConditions) 
+	If (tWhereConditions'=""){
+		Set tWhereCause = " WHERE " _ tWhereConditions
+	} Else {
+		Set tWhereCause = ""
+	}
+	Quit tWhereCause
+]]></Implementation>
+</Method>
+
 <Method name="ConstructWhereConditions">
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary,pTypes,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
@@ -280,7 +295,6 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 	}
 		
 	Set tTypeCount = $length(pTypes,",")
-	s ^test("pTypes")=pTypes
 	If ((pTypes'="") && (tTypeCount>0)) {
 		Set tTypesSQL=""
 		For i=1:1:tTypeCount {
@@ -293,7 +307,17 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		Set tTypesSQL = $LTS(tTypesSQL,", ")
 		Set tSpecialConditions = tSpecialConditions _ $LB("Type IN (" _ tTypesSQL _ ")")
 	}
-	return $LTS(tSpecialConditions," AND ")
+	Quit $LTS(tSpecialConditions," AND ")
+]]></Implementation>
+</Method>
+
+<Method name="ConstructOrgerByCause">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDescending:%Boolean=1</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	Set tOrder = $select(pDescending: "DESC", 1: "ASC")
+	Quit " ORDER BY ID " _ tOrder
 ]]></Implementation>
 </Method>
 
@@ -304,7 +328,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <Implementation><![CDATA[
 	Set tStatus = $$$OK
 	Try {
-		Set tOrder = $select(pDescending: "DESC", 1: "ASC")
+		
 		//Set tInStatement = ##class(%SQL.Statement).%New()
 		//Set tInStatement.%SelectMode = 0
 		If $IsObject(pConditions) {
@@ -322,7 +346,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		Set tMainStatement.%SelectMode = pSelectMode
 		Set tBaseSQL = "SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod,$ZNSPACE As Namespace FROM Ens_Util.Log"
 
-		Set tFinalSQL = tBaseSQL _ " WHERE " _ ..ConstructWhereConditions(.qHandle, pTypes, pConditions) _ " ORDER BY ID " _ tOrder
+		Set tFinalSQL = tBaseSQL _  ..ConstructWhereCause(.qHandle, pTypes, pConditions) _ ..ConstructOrgerByCause(pDescending)
 		Set qHandle("SQL") = tFinalSQL
 		Set tStatus = tMainStatement.%Prepare(tFinalSQL)
 		If $$$ISERR(tStatus) Quit
