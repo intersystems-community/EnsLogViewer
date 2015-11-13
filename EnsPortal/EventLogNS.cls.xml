@@ -9,6 +9,11 @@ With namespace support</Description>
 <System>4</System>
 <TimeCreated>60310,50851.071342</TimeCreated>
 
+<Parameter name="BaseSQL">
+<Type>%String</Type>
+<Default>SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod,$ZNSPACE As Namespace FROM Ens_Util.Log</Default>
+</Parameter>
+
 <XData name="resultsPane">
 <Description>
 This pane displays event log activity table. User may click on a row and details are displayed to the side.</Description>
@@ -148,17 +153,11 @@ When all of these conditions are met, we hand off responsibility for the data re
 	Set tDescending = $select($piece(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
 	Set pSC = tRS.Execute($listtostring(tTypes),tDescending,,tConditions)
 	If $$$ISERR(pSC) Quit ""
-	Set pInfo.queryText = "EnsPortal.EventLog:MultiType class query; " _ "sql!!!!!"
-	Set pInfo.queryExecuted = 1
-	Quit tRS
 	
-	S ^test("zzz")=1
-
-	Set tMaxRows = 0
-	If (tIndexCount > 1) {
-		Set tMaxRows = $P(tSearchCriteria,"^",5)
-		If (tMaxRows = "") Set tMaxRows = 500
-	}
+	Set pInfo.queryText = "EnsPortal.EventLogNS:MultiType class query"
+	Set pInfo.queryExecuted = 1
+	Set tMaxRows = $P(tSearchCriteria,"^",5)
+	If (tMaxRows = "") Set tMaxRows = 500
 	Set pInfo.rows = tMaxRows
 	Quit tRS
 ]]></Implementation>
@@ -328,9 +327,6 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <Implementation><![CDATA[
 	Set tStatus = $$$OK
 	Try {
-		
-		//Set tInStatement = ##class(%SQL.Statement).%New()
-		//Set tInStatement.%SelectMode = 0
 		If $IsObject(pConditions) {
 			If (pConditions.NamespaceList '= "") {
 				Set qHandle("NamespaceList") = pConditions.NamespaceList
@@ -341,20 +337,17 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 			}
 		}
 		
-
 		Set tMainStatement = ##class(%SQL.Statement).%New()
 		Set tMainStatement.%SelectMode = pSelectMode
-		Set tBaseSQL = "SELECT Type,ID,TimeLogged,SessionId,Job,ConfigName,Text,TraceCat,SourceClass,SourceMethod,$ZNSPACE As Namespace FROM Ens_Util.Log"
 
-		Set tFinalSQL = tBaseSQL _  ..ConstructWhereCause(.qHandle, pTypes, pConditions) _ ..ConstructOrgerByCause(pDescending)
-		Set qHandle("SQL") = tFinalSQL
-		Set tStatus = tMainStatement.%Prepare(tFinalSQL)
+		Set tSQL = ..#BaseSQL _  ..ConstructWhereCause(.qHandle, pTypes, pConditions) _ ..ConstructOrgerByCause(pDescending)
+		Set qHandle("SQL") = tSQL
+		Set tStatus = tMainStatement.%Prepare(tSQL)
 		If $$$ISERR(tStatus) Quit
 		Merge tMainArgs = qHandle("mainArgs")
 		Set tRS = tMainStatement.%Execute(tMainArgs...)
 		Set qHandle("mainStmt") = tMainStatement
 		Set qHandle("tRS") = tRS
-		m ^test("qhandle") =qHandle 
 	}
 	Catch {
 		Set tStatus = $$$EnsSystemError
@@ -369,6 +362,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	Zn qHandle("OriginalNamespace")
+	Kill qHandle 
 	Quit $$$OK
 ]]></Implementation>
 </Method>
@@ -383,8 +377,6 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 	Try {
 		Set Row = ""
 		While (Row = "") {
-			s ^test("tDataRS") = qHandle("tRS")
-			//Set tDataRS = 
 			If qHandle("tRS").%Next() {
 				s tDataRS = qHandle("tRS")
 				Set Row = $lb(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$piece(tDataRS.TimeLogged," ",2),tDataRS.Namespace)
@@ -399,7 +391,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 					Set tRS = qHandle("mainStmt").%Execute(tMainArgs...)
 					Set qHandle("tRS") = tRS
 				} Else {
-					Set AtEnd =1
+					Set AtEnd = 1
 					Quit
 				}
 			}
