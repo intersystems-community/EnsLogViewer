@@ -105,27 +105,27 @@ Returns <query>MultiTypeNS</query> class query]]></Description>
 	
 	Set tEventTypes = $P(tSearchCriteria,"^",4)
 	Set tTypeCount = 0
-	Set tEventNames = $lb("Assert","Error","Warning","Info","Trace","Alert")
+	Set tEventNames = $LB("Assert","Error","Warning","Info","Trace","Alert")
 	Set tTypes = ""
 	For i=1:1:6 {
 		Set tInclude = $P(tEventTypes,",",i)
 		If $S(tInclude="true":1,tInclude="false":0,1:tInclude) {
 			Set tTypeCount = tTypeCount + 1 
-			Set tTypes = tTypes _ $listbuild($listget(tEventNames,i))
+			Set tTypes = tTypes _ $LB($LG(tEventNames,i))
 		}
 	}
 
 	Set tRS = ##class(%Library.ResultSet).%New("EnsPortal.EventLogNS:MultiType")
 	#; Get inclusive StartID and EndID values
-	Set tStartID = $piece(tSearchCriteria,",",6)
-	Set tEndID = $piece(tSearchCriteria,",",7)
+	Set tStartID = $P(tSearchCriteria,",",6)
+	Set tEndID = $P(tSearchCriteria,",",7)
 	If (tStartID && tEndID) && (tEndID < tStartID) {
 		Set tTempID = tStartID
 		Set tStartID = tEndID
 		Set tEndID = tTempID
 	}
-	Set tMinID = $select(tStartID: tStartID-1, 1: "")
-	Set tMaxID = $select(tEndID: tEndID+1, 1: "")
+	Set tMinID = $S(tStartID: tStartID-1, 1: "")
+	Set tMaxID = $S(tEndID: tEndID+1, 1: "")
 	Do ..AdjustMinMax(.tMinID,.tMaxID)
 
 	
@@ -134,18 +134,18 @@ Returns <query>MultiTypeNS</query> class query]]></Description>
 	Set:tMaxID tConditions.MaxID = tMaxID
 	// Pick up any other restrictions
 	Set tConditions.ConfigName = tConfigName
-	Set tConditions.SourceClass = $piece(tDefaults,",",2)
-	Set tConditions.SourceMethod = $piece(tDefaults,",",3)
-	Set tConditions.Text = $piece(tDefaults,",",4)
-	Set tConditions.Job = $piece(tDefaults,",",5)
-	Set tConditions.SessionID = $piece(tDefaults,",",10)
+	Set tConditions.SourceClass = $P(tDefaults,",",2)
+	Set tConditions.SourceMethod = $P(tDefaults,",",3)
+	Set tConditions.Text = $P(tDefaults,",",4)
+	Set tConditions.Job = $P(tDefaults,",",5)
+	Set tConditions.SessionID = $P(tDefaults,",",10)
 	Set tConditions.NamespaceList = $P(tSearchCriteria,"^",8)
 	Set tConditions.StartTime = tStartTime
 	Set tConditions.EndTime = tEndTime
 	
 	
-	Set tDescending = $select($piece(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
-	Set pSC = tRS.Execute($listtostring(tTypes),tDescending,,tConditions)
+	Set tDescending = $S($P(tSearchCriteria,"^",1) = "Newest First": 1, 1: 0)
+	Set pSC = tRS.Execute($LTS(tTypes),tDescending,,tConditions)
 	If $$$ISERR(pSC) Quit ""
 	
 	Set pInfo.queryText = "EnsPortal.EventLogNS:MultiType class query"
@@ -164,8 +164,8 @@ Save user's last search criteria into global for page default</Description>
 <FormalSpec>SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,NamespaceList=$Namespace</FormalSpec>
 <ZenMethod>1</ZenMethod>
 <Implementation><![CDATA[
-	For p = 1:1:$L(EventType,",") Set pv=$P(EventType,",",p),$P(EventType,",",p) = $S(pv="true":1,pv="false":0,1:pv)
-	For p = 1:1:$L(States,",") Set pv=$P(States,",",p),$P(States,",",p) = $S(pv="true":1,pv="false":0,1:pv)
+	For p = 1:1:$L(EventType,",") Set pv = $P(EventType,",",p),$P(EventType,",",p) = $S(pv="true":1,pv="false":0,1:pv)
+	For p = 1:1:$L(States,",") Set pv = $P(States,",",p),$P(States,",",p) = $S(pv="true":1,pv="false":0,1:pv)
 	Set AutoRefresh = $S(AutoRefresh="true":1,AutoRefresh="false":0,1:AutoRefresh)
 	Do ..SetDefaultString(SortOrder_"^"_TimeFormat_"^"_Defaults_"^"_EventType_"^"_MaxRows_"^"_States_"^"_AutoRefresh _"^"_ NamespaceList)
 ]]></Implementation>
@@ -219,7 +219,7 @@ Construct WHERE part of an SQL statement. </Description>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	Set tWhereConditions = ..ConstructWhereConditions(.qHandle, pTypes, pConditions) 
-	If (tWhereConditions'=""){
+	If (tWhereConditions '= ""){
 		Set tWhereCause = " WHERE " _ tWhereConditions
 	} Else {
 		Set tWhereCause = ""
@@ -241,27 +241,27 @@ Construct WHERE <Condition(s)> part of an SQL statement. Returns empty string if
 		If (pConditions.MinID '= "") {
 			Set tConditions = tConditions _ $LB("ID > ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.MinID
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.MinID
 		}
 		If (pConditions.MaxID '= "") {
 			Set tConditions = tConditions _ $LB("ID < ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.MaxID
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.MaxID
 		}
 		If (pConditions.Job '= "") {
 			Set tConditions = tConditions _ $LB("Job = ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Job
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.Job
 		}
 		If (pConditions.SessionID '= "") {
 			Set tConditions = tConditions _ $LB("SessionId = ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SessionID
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.SessionID
 		}
 		If (pConditions.SourceClass '= "") {
 			Set tConditions = tConditions _ $LB("SourceClass LIKE ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.SourceClass
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.SourceClass
 		}
 		If (pConditions.SourceMethod '= "") {
 			Set tConditions = tConditions _ $LB("SourceMethod LIKE ?")
@@ -271,7 +271,7 @@ Construct WHERE <Condition(s)> part of an SQL statement. Returns empty string if
 		If (pConditions.Text '= "") {
 			Set tConditions = tConditions _ $LB("Text [ ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.Text
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.Text
 		}
 		If (pConditions.StartTime '= "") {
 			Set tConditions = tConditions _ $LB("TimeLogged >= ?")
@@ -281,22 +281,22 @@ Construct WHERE <Condition(s)> part of an SQL statement. Returns empty string if
 		If (pConditions.EndTime '= "") {
 			Set tConditions = tConditions _ $LB("TimeLogged <= ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.EndTime
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.EndTime
 		}
 		If (pConditions.ConfigName '= "") {
 			Set tConditions = tConditions _ $LB("ConfigName LIKE ?")
 			Set qHandle("mainArgs") = qHandle("mainArgs") + 1
-			Set qHandle("mainArgs",qHandle("mainArgs")) = pConditions.ConfigName
+			Set qHandle("mainArgs", qHandle("mainArgs")) = pConditions.ConfigName
 		}
 	}
 		
-	Set tTypeCount = $length(pTypes,",")
-	If ((pTypes'="") && (tTypeCount>0)) {
+	Set tTypeCount = $L(pTypes,",")
+	If ((pTypes '= "") && (tTypeCount>0)) {
 		Set tTypesSQL=""
-		For i=1:1:tTypeCount {
-			Set tType = $piece(pTypes,",",i)
+		For i= 1:1:tTypeCount {
+			Set tType = $P(pTypes,",",i)
 			If (tType '= "") && '##class(Ens.DataType.LogType).IsValid(tType) {
-				Set tTypesSQL =tTypesSQL _ $lb("'" _ tType _ "'")
+				Set tTypesSQL =tTypesSQL _ $LB("'" _ tType _ "'")
 			}
 			
 		}
@@ -314,7 +314,7 @@ Construct ORDER BY part of an SQL statement. </Description>
 <FormalSpec>pDescending:%Boolean=1</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	Set tOrder = $select(pDescending: "DESC", 1: "ASC")
+	Set tOrder = $S(pDescending: "DESC", 1: "ASC")
 	Quit " ORDER BY ID " _ tOrder
 ]]></Implementation>
 </Method>
@@ -375,7 +375,7 @@ Construct ORDER BY part of an SQL statement. </Description>
 		While (Row = "") {
 			If qHandle("tRS").%Next() { // We are iterating over resultset
 				Set tDataRS = qHandle("tRS")
-				Set Row = $lb(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$piece(tDataRS.TimeLogged," ",2),tDataRS.Namespace)
+				Set Row = $LB(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$P(tDataRS.TimeLogged," ",2),tDataRS.Namespace)
 			} Else { // We have reached the end of current resultset
 				If qHandle("CurrentNamespaceNumber") < qHandle("NamespaceCount") { // Check, if there are yet namespaces left to execute our query in
 					Set qHandle("CurrentNamespaceNumber") = qHandle("CurrentNamespaceNumber") + 1
@@ -411,9 +411,9 @@ Returns info about availible Ensemble-enabled Namespaces</Description>
 	Set tNamespace = $O(tNSList(""))
 	Set tEnsNSList = ""
 	While tNamespace '= "" {
-		Set tEnabled = $Lg(tNSList(tNamespace),1)
+		Set tEnabled = $LG(tNSList(tNamespace),1)
 		If tEnabled && ##class(%EnsembleMgr).IsEnsembleNamespace() {
-			Set tEnsNSList = tEnsNSList _ $lb(tNamespace)
+			Set tEnsNSList = tEnsNSList _ $LB(tNamespace)
 		}
 		Set tNamespace = $O(tNSList(tNamespace))
 	}
@@ -429,22 +429,22 @@ This is OK (for now) because the main StartID and EndID restrictions use conditi
 <Implementation><![CDATA[
 	Set tTable = ..%GetComponentById("table")
 	If $IsObject(tTable) && (tTable.sql '= "") {
-		Set tModifiers = $piece(tTable.sql," FROM Ens_Util.Log",2)
+		Set tModifiers = $P(tTable.sql," FROM Ens_Util.Log",2)
 		If (tModifiers '= "") && (tModifiers [ " WHERE ") {
-			Set tWhere = $piece($piece(tModifiers," ORDER BY ID",1),"WHERE ",2)
+			Set tWhere = $P($P(tModifiers," ORDER BY ID",1),"WHERE ",2)
 			If (tWhere '= "") {
-				For i=1:1:$length(tWhere," AND ") {
+				For i=1:1:$L(tWhere," AND ") {
 					#; remove trailing whitespace so the value is at end
-					Set tCondition = $zstrip($piece(tWhere," AND ",i),">W")
-					Set tProp = $piece(tCondition," ",1)
+					Set tCondition = $Zstrip($P(tWhere," AND ",i),">W")
+					Set tProp = $P(tCondition," ",1)
 					If (tProp = "ID") {
-						Set tOp = $piece($piece(tCondition,tProp_" ",2)," ",1)
-						Set tVal = $piece(tCondition," ",*)
+						Set tOp = $P($P(tCondition,tProp_" ",2)," ",1)
+						Set tVal = $P(tCondition," ",*)
 						If (tOp = "<") {
-							Set pMaxID = $select(tVal = "": pMaxID, pMaxID = "": tVal, pMaxID < tVal: pMaxID, 1: tVal)
+							Set pMaxID = $S(tVal="": pMaxID, pMaxID="": tVal, pMaxID<tVal: pMaxID, 1: tVal)
 						}
 						ElseIf (tOp = ">") {
-							Set pMinID = $select(tVal = "": pMinID, pMinID = "": tVal, pMinID > tVal: pMinID, 1: tVal)
+							Set pMinID = $S(tVal="": pMinID, pMinID="": tVal, pMinID>tVal: pMinID, 1: tVal)
 						}
 					}
 				}
