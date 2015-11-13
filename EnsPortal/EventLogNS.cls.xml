@@ -127,32 +127,8 @@ When all of these conditions are met, we hand off responsibility for the data re
 	}
 	Set tMinID = $select(tStartID: tStartID-1, 1: "")
 	Set tMaxID = $select(tEndID: tEndID+1, 1: "")
-	#; Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
-	#; This is OK (for now) because the main StartID and EndID restrictions use conditions on "%ID"
-	Set tTable = ..%GetComponentById("table")
-	If $IsObject(tTable) && (tTable.sql '= "") {
-		Set tModifiers = $piece(tTable.sql," FROM Ens_Util.Log",2)
-		If (tModifiers '= "") && (tModifiers [ " WHERE ") {
-			Set tWhere = $piece($piece(tModifiers," ORDER BY ID",1),"WHERE ",2)
-			If (tWhere '= "") {
-				For i=1:1:$length(tWhere," AND ") {
-					#; remove trailing whitespace so the value is at end
-					Set tCondition = $zstrip($piece(tWhere," AND ",i),">W")
-					Set tProp = $piece(tCondition," ",1)
-					If (tProp = "ID") {
-						Set tOp = $piece($piece(tCondition,tProp_" ",2)," ",1)
-						Set tVal = $piece(tCondition," ",*)
-						If (tOp = "<") {
-							Set tMaxID = $select(tVal = "": tMaxID, tMaxID = "": tVal, tMaxID < tVal: tMaxID, 1: tVal)
-						}
-						ElseIf (tOp = ">") {
-							Set tMinID = $select(tVal = "": tMinID, tMinID = "": tVal, tMinID > tVal: tMinID, 1: tVal)
-						}
-					}
-				}
-			}
-		}
-	}
+	Do ..AdjustMinMax(.tMinID,.tMaxID)
+
 	
 	Set tConditions = ##class(%ZEN.proxyObject).%New()
 	Set:tMinID tConditions.MinID = tMinID
@@ -431,6 +407,39 @@ Returns info about availible Ensemble-enabled Namespaces</Description>
 		Set tNamespace = $O(tNSList(tNamespace))
 	}
 	return tEnsNSList
+]]></Implementation>
+</Method>
+
+<Method name="AdjustMinMax">
+<Description>
+	Ensure that we check the table's sql to see whether there is any paging based on a condition on "ID"
+This is OK (for now) because the main StartID and EndID restrictions use conditions on "%ID"</Description>
+<FormalSpec>tMinID,tMaxID</FormalSpec>
+<Implementation><![CDATA[
+	Set tTable = ..%GetComponentById("table")
+	If $IsObject(tTable) && (tTable.sql '= "") {
+		Set tModifiers = $piece(tTable.sql," FROM Ens_Util.Log",2)
+		If (tModifiers '= "") && (tModifiers [ " WHERE ") {
+			Set tWhere = $piece($piece(tModifiers," ORDER BY ID",1),"WHERE ",2)
+			If (tWhere '= "") {
+				For i=1:1:$length(tWhere," AND ") {
+					#; remove trailing whitespace so the value is at end
+					Set tCondition = $zstrip($piece(tWhere," AND ",i),">W")
+					Set tProp = $piece(tCondition," ",1)
+					If (tProp = "ID") {
+						Set tOp = $piece($piece(tCondition,tProp_" ",2)," ",1)
+						Set tVal = $piece(tCondition," ",*)
+						If (tOp = "<") {
+							Set tMaxID = $select(tVal = "": tMaxID, tMaxID = "": tVal, tMaxID < tVal: tMaxID, 1: tVal)
+						}
+						ElseIf (tOp = ">") {
+							Set tMinID = $select(tVal = "": tMinID, tMinID = "": tVal, tMinID > tVal: tMinID, 1: tVal)
+						}
+					}
+				}
+			}
+		}
+	}
 ]]></Implementation>
 </Method>
 
