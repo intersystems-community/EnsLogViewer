@@ -88,12 +88,7 @@ This pane displays event log activity table. User may click on a row and details
 <Method name="CheckConditions">
 <Description><![CDATA[
 Callback that is executed when creating the resultset for the main table.
-The method's main purpose is to determine whether the <query>MultiType</query> class query
-should be used in cases where we have the following:
-<ul><li>more than one Type selected,</li>
-<li>not all Types selected, and</li>
-<li>no conditions on other indexed fields</li></ul>
-When all of these conditions are met, we hand off responsibility for the data retrieval to the class query.]]></Description>
+Returns <query>MultiTypeNS</query> class query]]></Description>
 <FormalSpec>*pSC:%Status,pInfo:%ZEN.Auxiliary.QueryInfo</FormalSpec>
 <ReturnType>%ResultSet</ReturnType>
 <Implementation><![CDATA[
@@ -219,6 +214,8 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 </Query>
 
 <Method name="ConstructWhereCause">
+<Description>
+Construct WHERE part of an SQL statement. </Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary,pTypes,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
 <ReturnType>%String</ReturnType>
@@ -234,6 +231,8 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 </Method>
 
 <Method name="ConstructWhereConditions">
+<Description><![CDATA[
+Construct WHERE <Condition(s)> part of an SQL statement. Returns empty string if there is no conditions.]]></Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary,pTypes,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
 <ReturnType>%String</ReturnType>
@@ -311,6 +310,8 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 </Method>
 
 <Method name="ConstructOrgerByCause">
+<Description>
+Construct ORDER BY part of an SQL statement. </Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>pDescending:%Boolean=1</FormalSpec>
 <ReturnType>%String</ReturnType>
@@ -345,7 +346,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 		Merge tMainArgs = qHandle("mainArgs")
 		Set tRS = tMainStatement.%Execute(tMainArgs...)
 		Set qHandle("mainStmt") = tMainStatement
-		Set qHandle("tRS") = tRS
+		Set qHandle("tRS") = tRS // %sqlcq class extending %SQL.ISelectResult
 	}
 	Catch {
 		Set tStatus = $$$EnsSystemError
@@ -375,11 +376,11 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 	Try {
 		Set Row = ""
 		While (Row = "") {
-			If qHandle("tRS").%Next() {
-				s tDataRS = qHandle("tRS")
+			If qHandle("tRS").%Next() { // We are iterating over resultset
+				Set tDataRS = qHandle("tRS")
 				Set Row = $lb(tDataRS.Type,tDataRS.ID,tDataRS.TimeLogged,tDataRS.SessionId,tDataRS.Job,tDataRS.ConfigName,tDataRS.Text,tDataRS.TraceCat,tDataRS.SourceClass,tDataRS.SourceMethod,tDataRS.TimeLogged,$piece(tDataRS.TimeLogged," ",2),tDataRS.Namespace)
-			} Else {
-				If qHandle("CurrentNamespaceNumber") < qHandle("NamespaceCount") {
+			} Else { // We have reached the end of current resultset
+				If qHandle("CurrentNamespaceNumber") < qHandle("NamespaceCount") { // Check, if there are yet namespaces left to execute our query in
 					Set qHandle("CurrentNamespaceNumber") = qHandle("CurrentNamespaceNumber") + 1
 					Set qHandle("CurrentNamespace") = $P(qHandle("NamespaceList"),",",qHandle("CurrentNamespaceNumber"))
 					Zn qHandle("CurrentNamespace")
@@ -388,7 +389,7 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 					Merge tMainArgs = qHandle("mainArgs")
 					Set tRS = qHandle("mainStmt").%Execute(tMainArgs...)
 					Set qHandle("tRS") = tRS
-				} Else {
+				} Else { //  We iterated over all required namespaces
 					Set AtEnd = 1
 					Quit
 				}
