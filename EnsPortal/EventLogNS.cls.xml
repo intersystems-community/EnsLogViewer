@@ -613,7 +613,7 @@ Server-side callback to provide data for the details table</Description>
 
 <Method name="GetDefaultApp">
 <Description>
-Server-side callback to provide data for the details table</Description>
+GetDefaultApp returns default web application names (where ZEN classes are)</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>pNamespace:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
