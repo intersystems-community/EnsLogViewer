@@ -611,6 +611,16 @@ Server-side callback to provide data for the details table</Description>
 ]]></Implementation>
 </Method>
 
+<Method name="GetDefaultApp">
+<Description>
+Server-side callback to provide data for the details table</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%String</ReturnType>
+<ZenMethod>1</ZenMethod>
+<Implementation><![CDATA[	Quit $System.CSP.GetDefaultApp($Namespace)
+]]></Implementation>
+</Method>
+
 <Method name="onSearchHandler">
 <Description>
 User clicked the Search button, user changed a Quick Search or Event Type criterion, 
