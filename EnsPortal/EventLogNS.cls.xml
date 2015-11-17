@@ -615,9 +615,10 @@ Server-side callback to provide data for the details table</Description>
 <Description>
 Server-side callback to provide data for the details table</Description>
 <ClassMethod>1</ClassMethod>
+<FormalSpec>pNamespace:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <ZenMethod>1</ZenMethod>
-<Implementation><![CDATA[	Quit $System.CSP.GetDefaultApp($Namespace)
+<Implementation><![CDATA[	Quit $System.CSP.GetDefaultApp(pNamespace)
 ]]></Implementation>
 </Method>
 
@@ -702,13 +703,48 @@ toggle detailTable for a selected row.</Description>
 			detail.setContent(this._oldRows[this.selectedId]);
 		} else { // get new content from server
 			detail.setContent(""); // clear out any lingering content from before
-			detail.seed = this.selectedId + ',' + zen('table').getRenderedRowData(zen('table').selectedIndex).Namespace; 
+			var table = zen('table');
+			detail.seed = this.selectedId + ',' + table.getRenderedRowData(table.selectedIndex).Namespace; 
 			detail.refreshContents(true); 
 			this._oldRows[this.selectedId] = detail.getEnclosingDiv().innerHTML;
 		}
 		detail.setHidden(false);
+	}
+]]></Implementation>
+</Method>
+
+<Method name="showTrace">
+<Description>
+User clicked a link for Trace. Display the Visual Trace page in a popup,
+so user can click the arrows to go from session to session without losing his/her place in the Event Log.</Description>
+<FormalSpec>session,stopEvent,evt</FormalSpec>
+<Language>javascript</Language>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+	if (stopEvent) {
+		if (zenIsIE) {
+			if (!evt) {
+				evt = window.event;
+			}
+			if (evt) {
+				evt.cancelBubble = true;
+			}
+		}
+		else if (evt) {
+			evt.stopPropagation();
+		}
+	}
+	if (session != '') {
+		if (!this.canViewTrace) {
+			alert(this.msgNotPermitted);
+			return false;
+		}
 		
-		console.log(zen('table'));
+		var table = zen('table');
+		var ns = table.getRenderedRowData(table.selectedIndex).Namespace;
+		
+		var URI = zenPage.GetDefaultApp(ns) + '/' + this.tracePage +'?SESSIONID='+encodeURIComponent(session);
+		window.open(URI);
 	}
 ]]></Implementation>
 </Method>
