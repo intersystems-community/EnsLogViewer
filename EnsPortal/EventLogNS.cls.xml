@@ -594,6 +594,23 @@ This is OK (for now) because the main StartID and EndID restrictions use conditi
 ]]></Implementation>
 </Method>
 
+<Method name="DrawEventDetails">
+<Description>
+Server-side callback to provide data for the details table</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pSeed:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Set tId = $P(pSeed,",",1)
+	Set tEventNamespace = $P(pSeed,",",2)
+	Set tCurrentNamespace = $Namespace
+	Zn:(tEventNamespace'=tCurrentNamespace) tEventNamespace
+	Set tStatus = ##class(EnsPortal.Utils).DrawEventInfo(tId,1,1)
+	Zn:(tEventNamespace'=tCurrentNamespace) tCurrentNamespace
+	Quit tStatus
+]]></Implementation>
+</Method>
+
 <Method name="onSearchHandler">
 <Description>
 User clicked the Search button, user changed a Quick Search or Event Type criterion, 
