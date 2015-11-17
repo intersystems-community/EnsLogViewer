@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2015.1 (Build 425U)" ts="2015-11-13 16:35:33">
+<Export generator="Cache" version="25">
 <Class name="EnsPortal.EventLogNS">
 <Description>
 This is the Event Log page of the ZEN Ensemble application.
@@ -7,7 +7,6 @@ With namespace support</Description>
 <IncludeCode>Ensemble</IncludeCode>
 <Super>EnsPortal.EventLog</Super>
 <System>4</System>
-<TimeChanged>63869,59720.696905</TimeChanged>
 <TimeCreated>60310,50851.071342</TimeCreated>
 
 <Parameter name="BaseSQL">
@@ -658,6 +657,32 @@ or we have completed a non-zero Purge.</Description>
 	
 	// Save last selections to global as default for page
     zenPage.SaveDefaults(SortOrder,TimeFormat,Defaults,EventType,MaxRows,States,AutoRefresh,zen('nslist').getValue());
+]]></Implementation>
+</Method>
+
+<Method name="onSelectItem">
+<Description>
+toggle detailTable for a selected row.</Description>
+<Language>javascript</Language>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+	if (this.selectedId > 0) {
+		var detail = zen("dynaGrid"); // get the detail display
+		if (!this._oldRows) { // if needed, establish oldRows array to remember content
+			this._oldRows = new Object();
+		}
+		if (this._oldRows[this.selectedId]) { // reuse the content for this row
+			detail.setContent(this._oldRows[this.selectedId]);
+		} else { // get new content from server
+			detail.setContent(""); // clear out any lingering content from before
+			detail.seed = this.selectedId + ',' + zen('table').getRenderedRowData(zen('table').selectedIndex).Namespace; 
+			detail.refreshContents(true); 
+			this._oldRows[this.selectedId] = detail.getEnclosingDiv().innerHTML;
+		}
+		detail.setHidden(false);
+		
+		console.log(zen('table'));
+	}
 ]]></Implementation>
 </Method>
 </Class>
