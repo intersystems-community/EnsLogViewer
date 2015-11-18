@@ -220,9 +220,7 @@ Returns <query>MultiTypeNS</query> class query]]></Description>
 <FormalSpec>*pSC:%Status,pInfo:%ZEN.Auxiliary.QueryInfo</FormalSpec>
 <ReturnType>%ResultSet</ReturnType>
 <Implementation><![CDATA[
-	#If ##class(%Dictionary.CompiledParameter).%ExistsId("EnsPortal.EventLogNS||CANCANCELSEARCH")
-		Do:..#CANCANCELSEARCH ..PrepareCancel()
-	#EndIf
+	Do:..#CANCANCELSEARCH ..PrepareCancel()
 	
 	Set pSC = $$$OK
 	Set tRS = ""
