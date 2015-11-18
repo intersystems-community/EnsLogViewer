@@ -153,14 +153,14 @@ enclosingStyle="overflow-y: scroll; height: 300px; z-index:1000; position:absolu
         childIndent="16px" containerStyle="padding:10px 10px 0px 10px;" >
 <vgroup valign="top">
 <hgroup valign="top">
-<dateText name="StartTime" id="StartTime" label="Start Time" size="18" showTime="true" defaultTime="00:00:00" containerStyle="padding:0px 3px 0px 0px;"
+<dateText name="StartTime" id="StartTime" label="Start Time" size="18" showTime="true" containerStyle="padding:0px 3px 0px 0px;"
           title="Entering a date/time value in this field will restrict the search results to times after or equal to the given value" />
 <spacer width="10" />
 <text name="StartId" id="StartId" label="Start ID" size="9" 
           title="Entering an ID value in this field will restrict the search results to Event Log IDs greater than or equal to the given value" />
 </hgroup>
 <hgroup valign="top">
-<dateText name="EndTime" id="EndTime" label="End Time" size="18" showTime="true" defaultTime="23:59:59" containerStyle="padding:0px 3px 0px 0px;"
+<dateText name="EndTime" id="EndTime" label="End Time" size="18" showTime="true" containerStyle="padding:0px 3px 0px 0px;"
           title="Entering a date/time value in this field will restrict the search results to times before or equal to the given value" />
 <spacer width="10" />
 <text name="EndId" id="EndId" label="End ID" size="9"   
@@ -747,6 +747,18 @@ so user can click the arrows to go from session to session without losing his/he
 		var URI = zenPage.GetDefaultApp(ns) + '/' + this.tracePage +'?SESSIONID='+encodeURIComponent(session);
 		window.open(URI);
 	}
+]]></Implementation>
+</Method>
+
+<Method name="onloadHandler">
+<Description>
+This client event, if present, is fired when the page is loaded.</Description>
+<Language>javascript</Language>
+<ClientMethod>1</ClientMethod>
+<Implementation><![CDATA[
+	zen('StartTime').setProperty('defaultTime', '00:00:00');
+	zen('EndTime').setProperty('defaultTime', '23:59:59');;
+	this.invokeSuper('onloadHandler',[]);
 ]]></Implementation>
 </Method>
 </Class>
