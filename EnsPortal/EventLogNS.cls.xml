@@ -759,7 +759,7 @@ This client event, if present, is fired when the page is loaded.</Description>
 <ClientMethod>1</ClientMethod>
 <Implementation><![CDATA[
 	zen('StartTime').setProperty('defaultTime', '00:00:00');
-	zen('EndTime').setProperty('defaultTime', '23:49:59');;
+	zen('EndTime').setProperty('defaultTime', '23:59:59');;
 	this.invokeSuper('onloadHandler',[]);
 ]]></Implementation>
 </Method>
