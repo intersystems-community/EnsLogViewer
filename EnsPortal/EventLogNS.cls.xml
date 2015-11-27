@@ -329,7 +329,75 @@ Save user's last search criteria into global for page default</Description>
 Method called from <method>%OnAfterCreatePage</method> to get defaults and build up the initial display]]></Description>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	Do ##super()
+	If ..matchSource '= "" {
+		Do ..SetDefaultString("")
+	}
+	
+	#; Get the last saved default values and use them as defaults.
+	Set SearchCriteria = ..GetSearchCriteria()
+	Set SortOrder = $P(SearchCriteria,"^",1)
+	Set TimeFormat = $P(SearchCriteria,"^",2)
+	Set TimeFormat = $case(TimeFormat, 999: 999, : 12)
+	Set Defaults = $P(SearchCriteria,"^",3)
+	Set EventType = $P(SearchCriteria,"^",4)
+	Set MaxRows = $P(SearchCriteria,"^",5)
+	Set expandoState = $P(SearchCriteria,"^",6)
+	Set AutoRefresh = $P(SearchCriteria,"^",7)
+	
+	#; Load defaults for Details
+	Set ..%GetComponentById("SortOrder").value = SortOrder
+	Set ..%GetComponentById("TimeFormat").value = TimeFormat
+	Set ..%GetComponentById("MaxRows").value = MaxRows
+	Set ..%GetComponentById("ConfigName").value = $S(""'=..matchSource:..matchSource, 1:$P(Defaults,",",1))
+	Set ..%GetComponentById("SourceClass").value = $P(Defaults,",",2)
+	Set ..%GetComponentById("SourceMethod").value = $P(Defaults,",",3)
+	Set ..%GetComponentById("Text").value = $P(Defaults,",",4)
+	Set ..%GetComponentById("Job").value = $P(Defaults,",",5)
+	Set ..%GetComponentById("StartId").value = ..startId // the default is blank
+	Set ..%GetComponentById("EndId").value = ..endId // the default is blank
+	Set ..%GetComponentById("StartTime").value = $P(Defaults,",",8)
+	Set ..%GetComponentById("EndTime").value = $P(Defaults,",",9)
+	Set ..%GetComponentById("SessionId").value = $P(Defaults,",",10)
+	
+	#; Load defaults for Event Type
+	Set ..%GetComponentById("Assert").value = $P(EventType,",",1)
+	Set ..%GetComponentById("Error").value = $P(EventType,",",2)
+	Set ..%GetComponentById("Warning").value = $P(EventType,",",3)
+	Set ..%GetComponentById("Info").value = $P(EventType,",",4)
+	Set ..%GetComponentById("Trace").value = $P(EventType,",",5)
+	Set ..%GetComponentById("Alert").value = $P(EventType,",",6)
+	
+	#; Load Expando states
+	Set ..%GetComponentById("expQuick").expanded = $P(expandoState,",",1)
+	Set ..%GetComponentById("expInclude").expanded = $P(expandoState,",",2)
+	Set ..%GetComponentById("expDetails").expanded = $P(expandoState,",",3) || (""=$P(Defaults,",",1) && (""'=..matchSource))
+	Set ..%GetComponentById("expPurge").expanded = $P(expandoState,",",4)
+
+	#; Load auto-refresh setting
+	Set ..%GetComponentById("chkRefresh").value = AutoRefresh
+
+	#; set up the table
+	Set table = ..%GetComponentById("table")
+		
+	#; Where clause
+	Set table.whereClause = ..GetWhereClause(Defaults,EventType)
+	
+	#; Order by clause
+	Set table.orderByClause = "%ID"
+	If SortOrder = "Newest First" {
+		Set table.orderByClause = "%ID desc"
+	}
+	
+	#; Load time preference
+	Set ..%GetComponentById("idTimeLogged12").hidden = (TimeFormat = 999)
+	Set ..%GetComponentById("idTimeLogged999").hidden = (TimeFormat = 12)
+
+	#; Max Rows (Page Size)
+	If (MaxRows > 10000) { Set MaxRows = 500 }
+	If (MaxRows < 0) { Set MaxRows = 1 }
+	Set table.maxRows = MaxRows
+	
+	#; Namespaces
 	Set tNamespaceList = $LTS(..GetEnsembleNamespaces())
 	Set ..%GetComponentById("nslist").valueList = tNamespaceList
 ]]></Implementation>
