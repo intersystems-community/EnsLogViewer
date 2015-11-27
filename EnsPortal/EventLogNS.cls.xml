@@ -403,13 +403,6 @@ Method called from <method>%OnAfterCreatePage</method> to get defaults and build
 ]]></Implementation>
 </Method>
 
-<Query name="MultiType">
-<Type>%Query</Type>
-<FormalSpec>pTypes:%String="",pDescending:%Boolean=0,pSelectMode:%Integer=2,pConditions:%ZEN.proxyObject=""</FormalSpec>
-<Parameter name="CONTAINID" value="2"/>
-<Parameter name="ROWSPEC" value="Type:Ens.DataType.LogType,ID:%String,TimeLogged:%String,SessionId:%String,Job:%String,ConfigName:%String,Text:%String,TraceCat:%String,SourceClass:%String,SourceMethod:%String,TimeLogged999:%String,TimeLogged12:%String,Namespace:%String"/>
-</Query>
-
 <Method name="ConstructWhereCause">
 <Description>
 Construct WHERE part of an SQL statement. </Description>
@@ -518,6 +511,13 @@ Construct ORDER BY part of an SQL statement. </Description>
 ]]></Implementation>
 </Method>
 
+<Query name="MultiType">
+<Type>%Query</Type>
+<FormalSpec>pTypes:%String="",pDescending:%Boolean=0,pSelectMode:%Integer=2,pConditions:%ZEN.proxyObject=""</FormalSpec>
+<Parameter name="CONTAINID" value="2"/>
+<Parameter name="ROWSPEC" value="Type:Ens.DataType.LogType,ID:%String,TimeLogged:%String,SessionId:%String,Job:%String,ConfigName:%String,Text:%String,TraceCat:%String,SourceClass:%String,SourceMethod:%String,TimeLogged999:%String,TimeLogged12:%String,Namespace:%String"/>
+</Query>
+
 <Method name="MultiTypeExecute">
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary,pTypes:%String="",pDescending:%Boolean=1,pSelectMode:%Integer=2,pConditions:%ZEN.proxyObject=""]]></FormalSpec>
@@ -560,17 +560,6 @@ Construct ORDER BY part of an SQL statement. </Description>
 ]]></Implementation>
 </Method>
 
-<Method name="MultiTypeClose">
-<ClassMethod>1</ClassMethod>
-<FormalSpec><![CDATA[&qHandle:%Binary]]></FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-	Zn qHandle("OriginalNamespace")
-	Kill qHandle 
-	Quit $$$OK
-]]></Implementation>
-</Method>
-
 <Method name="MultiTypeFetch">
 <ClassMethod>1</ClassMethod>
 <FormalSpec><![CDATA[&qHandle:%Binary,&Row:%List,&AtEnd:%Integer=0]]></FormalSpec>
@@ -604,6 +593,17 @@ Construct ORDER BY part of an SQL statement. </Description>
 		Set tStatus = $$$EnsSystemError
 	}
 	Quit tStatus
+]]></Implementation>
+</Method>
+
+<Method name="MultiTypeClose">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&qHandle:%Binary]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	Zn qHandle("OriginalNamespace")
+	Kill qHandle 
+	Quit $$$OK
 ]]></Implementation>
 </Method>
 
