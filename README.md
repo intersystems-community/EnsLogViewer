@@ -1,5 +1,5 @@
 # EnsLogViewer
-Ensemble Log Viewer with namespace support. Works on Ensemble 2013.1/2014.1/2015.1/2015.2.
+Ensemble Log Viewer with namespace support. Works on Ensemble 2013.1 and later.
 
 ## Installation
 
